@@ -1,0 +1,9 @@
+{
+  "slot": "body",
+  "kind": "animated",
+  "dye": [
+    "cloth1",
+    "cloth2"
+  ],
+  "label": "Mage"
+}

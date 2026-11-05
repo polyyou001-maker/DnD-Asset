@@ -1,0 +1,41 @@
+{
+  "kind": "static",
+  "slot": "hair",
+  "attach": "head",
+  "dye": [
+    "hair"
+  ],
+  "label": "Long",
+  "pieces": [
+    {
+      "layer": "hair_back",
+      "row": 0
+    },
+    {
+      "layer": "hair_front",
+      "row": 1
+    }
+  ],
+  "pivot": {
+    "S": [
+      32,
+      24
+    ],
+    "SW": [
+      32,
+      24
+    ],
+    "W": [
+      32,
+      24
+    ],
+    "NW": [
+      32,
+      24
+    ],
+    "N": [
+      32,
+      24
+    ]
+  }
+}

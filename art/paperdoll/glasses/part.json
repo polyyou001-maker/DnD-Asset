@@ -1,0 +1,37 @@
+{
+  "kind": "static",
+  "slot": "head_mid",
+  "attach": "head",
+  "occupies": [
+    "head_mid"
+  ],
+  "label": "Glasses",
+  "pieces": [
+    {
+      "layer": "head_mid",
+      "row": 0
+    }
+  ],
+  "pivot": {
+    "S": [
+      32,
+      24
+    ],
+    "SW": [
+      32,
+      24
+    ],
+    "W": [
+      32,
+      24
+    ],
+    "NW": [
+      32,
+      24
+    ],
+    "N": [
+      32,
+      24
+    ]
+  }
+}

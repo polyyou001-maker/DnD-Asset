@@ -1,0 +1,4 @@
+# raw generations (regenerable from sets/*.json + seeds; 30+ MB of PNGs)
+pipeline/out/
+__pycache__/
+*.pyc

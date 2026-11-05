@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paper-doll Preview</title>
+<style>
+  :root { --bg: #1b1822; --panel: #262230; --fg: #eee; --muted: #a9a3b5; --accent: #f8c840; --line: #3b3546; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 13px system-ui, sans-serif;
+         display: grid; grid-template-columns: 260px 1fr; height: 100vh; }
+  aside { background: var(--panel); padding: 12px; overflow: auto; border-right: 1px solid var(--line); }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 14px 0 6px; }
+  label { display: grid; grid-template-columns: 80px 1fr; align-items: center; gap: 6px; margin: 4px 0; }
+  select, button { background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 4px 6px; font: inherit; }
+  button { cursor: pointer; } button:hover { border-color: var(--accent); }
+  .row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  main { position: relative; display: grid; grid-template-rows: 1fr auto; min-width: 0; }
+  #view { width: 100%; height: 100%; display: block; min-height: 0; }
+  #hud { position: absolute; top: 8px; left: 8px; background: #0008; padding: 4px 8px; border-radius: 4px; }
+  #strip { display: flex; gap: 4px; padding: 6px; background: var(--panel); border-top: 1px solid var(--line); overflow-x: auto; }
+  #strip figure { margin: 0; text-align: center; color: var(--muted); font-size: 11px; }
+  canvas.px { image-rendering: pixelated; background: repeating-conic-gradient(#3a3546 0 25%, #2e2a38 0 50%) 0 0/16px 16px; }
+  #editor { display: none; } #editor.on { display: block; }
+  #editCanvas { cursor: crosshair; width: 100%; max-width: 236px; }
+  .hint { color: var(--muted); font-size: 11px; }
+  @media (max-width: 700px) { body { grid-template-columns: 1fr; grid-template-rows: auto 60vh; height: auto; } }
+</style>
+<script type="importmap">
+  { "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  } }
+</script>
+</head>
+<body>
+<aside>
+  <h2>Equipment</h2>
+  <div id="slots"></div>
+  <h2>Dye</h2>
+  <div id="dyes"></div>
+  <h2>Animation</h2>
+  <label>anim <select id="anim"></select></label>
+  <div class="row">
+    <button id="turnL" title="turn left 45°">⟲ turn</button>
+    <button id="turnR" title="turn right 45°">turn ⟳</button>
+    <label style="display:flex"><input type="checkbox" id="circle"> walk in circle</label>
+  </div>
+  <p class="hint">Drag to rotate the camera, wheel to zoom. The shown direction = facing − camera yaw.</p>
+
+  <h2>Anchor editor</h2>
+  <label style="display:flex"><input type="checkbox" id="editToggle"> edit body anchors</label>
+  <div id="editor">
+    <label>dir <select id="eDir"></select></label>
+    <div class="row">frame <button id="ePrev">‹</button><span id="eFrame">0</span><button id="eNext">›</button></div>
+    <label>anchor <select id="eAnchor"><option>head</option><option>hand_main</option><option>hand_off</option></select></label>
+    <canvas id="editCanvas" class="px" width="64" height="64"></canvas>
+    <p class="hint">Click to place the selected anchor on this frame. Uses the anim above.</p>
+    <button id="eExport">Download anchors.json</button>
+  </div>
+</aside>
+<main>
+  <canvas id="view"></canvas>
+  <div id="hud"></div>
+  <div id="strip"></div>
+</main>
+<script type="module" src="main.js"></script>
+</body>
+</html>

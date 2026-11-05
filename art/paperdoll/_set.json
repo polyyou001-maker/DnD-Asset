@@ -1,0 +1,230 @@
+{
+  "version": 1,
+  "cell": [
+    64,
+    64
+  ],
+  "origin": [
+    32,
+    61
+  ],
+  "drawn": [
+    "S",
+    "SW",
+    "W",
+    "NW",
+    "N"
+  ],
+  "mirror": {
+    "NE": "NW",
+    "E": "W",
+    "SE": "SW"
+  },
+  "anims": {
+    "idle": {
+      "frames": 2,
+      "fps": 3
+    },
+    "walk": {
+      "frames": 4,
+      "fps": 8
+    }
+  },
+  "layerOrder": {
+    "S": [
+      "hair_back",
+      "body",
+      "face",
+      "hair_front",
+      "head_low",
+      "head_mid",
+      "head_top",
+      "weapon",
+      "shield"
+    ],
+    "SW": [
+      "hair_back",
+      "body",
+      "face",
+      "hair_front",
+      "head_low",
+      "head_mid",
+      "head_top",
+      "weapon",
+      "shield"
+    ],
+    "W": [
+      "weapon",
+      "hair_back",
+      "body",
+      "face",
+      "hair_front",
+      "head_low",
+      "head_mid",
+      "head_top",
+      "shield"
+    ],
+    "NW": [
+      "weapon",
+      "body",
+      "face",
+      "hair_front",
+      "hair_back",
+      "head_low",
+      "head_mid",
+      "head_top",
+      "shield"
+    ],
+    "N": [
+      "weapon",
+      "shield",
+      "body",
+      "face",
+      "hair_front",
+      "hair_back",
+      "head_low",
+      "head_mid",
+      "head_top"
+    ]
+  },
+  "ramps": {
+    "hair": [
+      "#5a2e2a",
+      "#8c4a3a",
+      "#c2765a",
+      "#eab08c"
+    ],
+    "cloth1": [
+      "#1a2a5a",
+      "#2f55a0",
+      "#4a90d8",
+      "#98d0f8"
+    ],
+    "cloth2": [
+      "#7a1f2b",
+      "#c0303a",
+      "#f0605a",
+      "#f8a8a0"
+    ]
+  },
+  "dyes": {
+    "hair": {
+      "brown": [
+        "#5a2e2a",
+        "#8c4a3a",
+        "#c2765a",
+        "#eab08c"
+      ],
+      "blonde": [
+        "#8a4a10",
+        "#d08a20",
+        "#f8c840",
+        "#fff090"
+      ],
+      "red": [
+        "#7a1f2b",
+        "#c0303a",
+        "#f0605a",
+        "#f8a8a0"
+      ],
+      "blue": [
+        "#1a2a5a",
+        "#2f55a0",
+        "#4a90d8",
+        "#98d0f8"
+      ],
+      "silver": [
+        "#5e4a63",
+        "#8f7f94",
+        "#c6bccb",
+        "#f4f1f2"
+      ],
+      "black": [
+        "#1a1020",
+        "#3b2a40",
+        "#5e4a63",
+        "#8f7f94"
+      ]
+    },
+    "cloth1": {
+      "blue": [
+        "#1a2a5a",
+        "#2f55a0",
+        "#4a90d8",
+        "#98d0f8"
+      ],
+      "green": [
+        "#1f4a2a",
+        "#3a8040",
+        "#78c050",
+        "#c0e890"
+      ],
+      "purple": [
+        "#3a1f5a",
+        "#6a3aa0",
+        "#a070d0",
+        "#e0b0f0"
+      ],
+      "red": [
+        "#7a1f2b",
+        "#c0303a",
+        "#f0605a",
+        "#f8a8a0"
+      ],
+      "black": [
+        "#1a1020",
+        "#3b2a40",
+        "#5e4a63",
+        "#8f7f94"
+      ]
+    },
+    "cloth2": {
+      "red": [
+        "#7a1f2b",
+        "#c0303a",
+        "#f0605a",
+        "#f8a8a0"
+      ],
+      "gold": [
+        "#8a4a10",
+        "#d08a20",
+        "#f8c840",
+        "#fff090"
+      ],
+      "green": [
+        "#1f4a2a",
+        "#3a8040",
+        "#78c050",
+        "#c0e890"
+      ],
+      "blue": [
+        "#1a2a5a",
+        "#2f55a0",
+        "#4a90d8",
+        "#98d0f8"
+      ],
+      "purple": [
+        "#3a1f5a",
+        "#6a3aa0",
+        "#a070d0",
+        "#e0b0f0"
+      ]
+    }
+  },
+  "defaultLoadout": {
+    "body": "body_mage",
+    "hair": "hair_long",
+    "face": "face_basic",
+    "head_top": "hat_witch",
+    "head_mid": null,
+    "head_low": null,
+    "weapon": "staff",
+    "shield": null,
+    "effect": null,
+    "dye": {
+      "hair": "brown",
+      "cloth1": "blue",
+      "cloth2": "red"
+    }
+  }
+}

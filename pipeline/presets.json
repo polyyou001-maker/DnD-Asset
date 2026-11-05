@@ -1,0 +1,70 @@
+{
+  "elin_sprite": {
+    "checkpoint": "noobaiXLNAIXL_epsilonPred11Version",
+    "lora": "<lora:ElinSpriteNoobLocon_byKonan:0.8>",
+    "prompt_prefix": "masterpiece, best quality, chibi, pixel art, full body, solo, standing, white background, simple background",
+    "negative": "worst quality, low quality, lowres, bad anatomy, bad hands, extra digits, multiple views, reference sheet, cropped, out of frame, shadow, gradient background, scenery, text, signature, watermark, blurry",
+    "direction_tags": {
+      "S": "facing viewer, from front",
+      "SW": "three-quarter view, looking to the side",
+      "W": "from side, profile",
+      "NW": "from behind, three-quarter view",
+      "N": "from behind, back"
+    },
+    "sampler": "Euler a",
+    "steps": 28,
+    "cfg": 5.5,
+    "width": 1024,
+    "height": 1024,
+    "controlnet_model": "noob-lineart-anime",
+    "process": {
+      "canvas": [64, 64],
+      "sprite_height": 56,
+      "baseline": 61,
+      "bg": "auto",
+      "white_tolerance": 18,
+      "outline": true
+    },
+    "qc": {
+      "min_fill": 0.04,
+      "max_colors": 24,
+      "stray_max_px": 3,
+      "halo_max_ratio": 0.35,
+      "baseline_tol": 1,
+      "height_tol": 0.12,
+      "center_tol": 3,
+      "duplicate_sim": 0.97
+    }
+  },
+  "elin_item": {
+    "checkpoint": "noobaiXLNAIXL_epsilonPred11Version",
+    "lora": "<lora:ElinSpriteNoobLocon_byKonan:0.6>",
+    "prompt_prefix": "masterpiece, best quality, pixel art, no humans, still life, object focus, white background, simple background",
+    "negative": "worst quality, low quality, lowres, 1girl, 1boy, multiple views, shadow, gradient background, text, signature, watermark, blurry",
+    "direction_tags": {},
+    "sampler": "Euler a",
+    "steps": 28,
+    "cfg": 5.0,
+    "width": 1024,
+    "height": 1024,
+    "controlnet_model": "noob-lineart-anime",
+    "process": {
+      "canvas": [32, 32],
+      "sprite_height": 28,
+      "baseline": 30,
+      "bg": "auto",
+      "white_tolerance": 18,
+      "outline": true
+    },
+    "qc": {
+      "min_fill": 0.04,
+      "max_colors": 16,
+      "stray_max_px": 2,
+      "halo_max_ratio": 0.35,
+      "baseline_tol": 32,
+      "height_tol": 1.0,
+      "center_tol": 32,
+      "duplicate_sim": 0.97
+    }
+  }
+}

@@ -1,0 +1,5 @@
+requests
+pillow
+numpy
+# optional, better background removal:
+# rembg

@@ -1,0 +1,34 @@
+# Shared game palette (one hex per line). The FIRST color is the outline color.
+# Placeholder 32-color palette for 90s-anime sprites: replace freely; all scripts read this file.
+1a1020
+3b2a40
+5e4a63
+8f7f94
+c6bccb
+f4f1f2
+ffffff
+5a2e2a
+8c4a3a
+c2765a
+eab08c
+fcdcc0
+7a1f2b
+c0303a
+f0605a
+f8a8a0
+8a4a10
+d08a20
+f8c840
+fff090
+1f4a2a
+3a8040
+78c050
+c0e890
+1a2a5a
+2f55a0
+4a90d8
+98d0f8
+3a1f5a
+6a3aa0
+a070d0
+e0b0f0

@@ -1,0 +1,316 @@
+{
+  "version": 2,
+  "cell": [
+    128,
+    128
+  ],
+  "origin": [
+    64,
+    122
+  ],
+  "label": "Body type A",
+  "geometry": {
+    "S": {
+      "top": 72,
+      "bot": 1183,
+      "H": 1111,
+      "neck": 499,
+      "head": [
+        42,
+        11,
+        85,
+        54
+      ],
+      "anchors": {
+        "head": [
+          63,
+          54
+        ],
+        "hand_left": [
+          48,
+          84
+        ],
+        "hand_right": [
+          79,
+          84
+        ]
+      }
+    },
+    "SW": {
+      "top": 63,
+      "bot": 1175,
+      "H": 1112,
+      "neck": 496,
+      "head": [
+        39,
+        10,
+        83,
+        54
+      ],
+      "anchors": {
+        "head": [
+          61,
+          54
+        ],
+        "hand_left": [
+          44,
+          84
+        ],
+        "hand_right": [
+          79,
+          84
+        ]
+      }
+    },
+    "W": {
+      "top": 72,
+      "bot": 1175,
+      "H": 1103,
+      "neck": 477,
+      "head": [
+        43,
+        11,
+        82,
+        52
+      ],
+      "anchors": {
+        "head": [
+          62,
+          52
+        ],
+        "hand_left": [
+          52,
+          82
+        ],
+        "hand_right": [
+          72,
+          82
+        ]
+      }
+    },
+    "NW": {
+      "top": 72,
+      "bot": 1184,
+      "H": 1112,
+      "neck": 457,
+      "head": [
+        43,
+        11,
+        83,
+        50
+      ],
+      "anchors": {
+        "head": [
+          63,
+          50
+        ],
+        "hand_left": [
+          44,
+          80
+        ],
+        "hand_right": [
+          85,
+          80
+        ]
+      }
+    },
+    "N": {
+      "top": 72,
+      "bot": 1175,
+      "H": 1103,
+      "neck": 475,
+      "head": [
+        40,
+        11,
+        87,
+        52
+      ],
+      "anchors": {
+        "head": [
+          63,
+          52
+        ],
+        "hand_left": [
+          35,
+          81
+        ],
+        "hand_right": [
+          91,
+          81
+        ]
+      }
+    }
+  },
+  "parts": {
+    "base_head": {
+      "id": "base_head",
+      "slot": "head",
+      "skinnable": true
+    },
+    "base_body": {
+      "id": "base_body",
+      "slot": "body_base",
+      "skinnable": true
+    },
+    "outfit_fighter": {
+      "id": "outfit_fighter",
+      "slot": "body",
+      "label": "outfit_fighter",
+      "class": "fighter",
+      "skinnable": true
+    },
+    "outfit_cleric": {
+      "id": "outfit_cleric",
+      "slot": "body",
+      "label": "outfit_cleric",
+      "class": "cleric",
+      "skinnable": true
+    },
+    "outfit_rogue": {
+      "id": "outfit_rogue",
+      "slot": "body",
+      "label": "outfit_rogue",
+      "class": "rogue",
+      "skinnable": true
+    },
+    "outfit_wizard": {
+      "id": "outfit_wizard",
+      "slot": "body",
+      "label": "outfit_wizard",
+      "class": "wizard",
+      "skinnable": true
+    },
+    "hair_bob": {
+      "id": "hair_bob",
+      "slot": "hair",
+      "label": "hair_bob",
+      "class": null,
+      "skinnable": false
+    },
+    "hair_long": {
+      "id": "hair_long",
+      "slot": "hair",
+      "label": "hair_long",
+      "class": null,
+      "skinnable": false
+    },
+    "hair_short": {
+      "id": "hair_short",
+      "slot": "hair",
+      "label": "hair_short",
+      "class": null,
+      "skinnable": false
+    },
+    "hair_twintails": {
+      "id": "hair_twintails",
+      "slot": "hair",
+      "label": "hair_twintails",
+      "class": null,
+      "skinnable": false
+    },
+    "hat_witch": {
+      "id": "hat_witch",
+      "slot": "head_top",
+      "label": "hat_witch",
+      "class": null,
+      "skinnable": false
+    },
+    "circlet": {
+      "id": "circlet",
+      "slot": "head_top",
+      "label": "circlet",
+      "class": null,
+      "skinnable": false
+    },
+    "ears_elf": {
+      "id": "ears_elf",
+      "slot": "ears",
+      "label": "ears_elf",
+      "class": null,
+      "skinnable": false
+    }
+  },
+  "items": {
+    "longsword": {
+      "grip": [
+        6,
+        43
+      ],
+      "angle": 0,
+      "file": "items/longsword.png",
+      "label": "Longsword",
+      "kind": "weapon"
+    },
+    "mace": {
+      "grip": [
+        5,
+        32
+      ],
+      "angle": 0,
+      "file": "items/mace.png",
+      "label": "Mace",
+      "kind": "weapon"
+    },
+    "dagger": {
+      "grip": [
+        8,
+        21
+      ],
+      "angle": 0,
+      "file": "items/dagger.png",
+      "label": "Dagger",
+      "kind": "weapon"
+    },
+    "staff": {
+      "grip": [
+        8,
+        55
+      ],
+      "angle": 0,
+      "file": "items/staff.png",
+      "label": "Quarterstaff",
+      "kind": "weapon"
+    },
+    "shield_kite": {
+      "grip": [
+        11,
+        20
+      ],
+      "angle": 0,
+      "file": "items/shield_kite.png",
+      "label": "Kite shield",
+      "kind": "shield"
+    },
+    "shield_round": {
+      "grip": [
+        16,
+        16
+      ],
+      "angle": 0,
+      "file": "items/shield_round.png",
+      "label": "Round shield",
+      "kind": "shield"
+    }
+  },
+  "dye": {
+    "skinRef": [
+      18.387096405029297,
+      0.469696968793869,
+      0.7411764860153198
+    ],
+    "eyeBand": [
+      185,
+      255
+    ],
+    "cloth1Band": [
+      185,
+      255
+    ],
+    "cloth1L": 0.43529415130615234,
+    "cloth2Band": [
+      33,
+      60
+    ],
+    "cloth2L": 0.6
+  }
+}

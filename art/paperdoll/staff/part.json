@@ -1,0 +1,34 @@
+{
+  "kind": "static",
+  "slot": "weapon",
+  "attach": "hand_main",
+  "label": "Staff",
+  "pieces": [
+    {
+      "layer": "weapon",
+      "row": 0
+    }
+  ],
+  "pivot": {
+    "S": [
+      32,
+      40
+    ],
+    "SW": [
+      32,
+      40
+    ],
+    "W": [
+      32,
+      40
+    ],
+    "NW": [
+      32,
+      40
+    ],
+    "N": [
+      32,
+      40
+    ]
+  }
+}

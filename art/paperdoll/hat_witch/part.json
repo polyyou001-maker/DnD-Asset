@@ -1,0 +1,37 @@
+{
+  "kind": "static",
+  "slot": "head_top",
+  "attach": "head",
+  "occupies": [
+    "head_top"
+  ],
+  "label": "Witch hat",
+  "pieces": [
+    {
+      "layer": "head_top",
+      "row": 0
+    }
+  ],
+  "pivot": {
+    "S": [
+      32,
+      24
+    ],
+    "SW": [
+      32,
+      24
+    ],
+    "W": [
+      32,
+      24
+    ],
+    "NW": [
+      32,
+      24
+    ],
+    "N": [
+      32,
+      24
+    ]
+  }
+}

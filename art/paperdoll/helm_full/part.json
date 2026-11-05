@@ -1,0 +1,43 @@
+{
+  "kind": "static",
+  "slot": "head_top",
+  "attach": "head",
+  "occupies": [
+    "head_top",
+    "head_mid",
+    "head_low"
+  ],
+  "hides": [
+    "hair_front",
+    "hair_back"
+  ],
+  "label": "Full helm",
+  "pieces": [
+    {
+      "layer": "head_top",
+      "row": 0
+    }
+  ],
+  "pivot": {
+    "S": [
+      32,
+      24
+    ],
+    "SW": [
+      32,
+      24
+    ],
+    "W": [
+      32,
+      24
+    ],
+    "NW": [
+      32,
+      24
+    ],
+    "N": [
+      32,
+      24
+    ]
+  }
+}

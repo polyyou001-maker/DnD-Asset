@@ -1,0 +1,178 @@
+{
+  "version": 2,
+  "cell": [
+    128,
+    128
+  ],
+  "origin": [
+    64,
+    122
+  ],
+  "label": "MOCK",
+  "geometry": {
+    "S": {
+      "top": 66,
+      "bot": 1181,
+      "H": 1115,
+      "neck": 486,
+      "head": [
+        42,
+        10,
+        85,
+        53
+      ],
+      "anchors": {
+        "head": [
+          64,
+          53
+        ],
+        "hand_left": [
+          37,
+          83
+        ],
+        "hand_right": [
+          90,
+          83
+        ]
+      }
+    },
+    "SW": {
+      "top": 67,
+      "bot": 1182,
+      "H": 1115,
+      "neck": 477,
+      "head": [
+        39,
+        11,
+        82,
+        52
+      ],
+      "anchors": {
+        "head": [
+          60,
+          52
+        ],
+        "hand_left": [
+          39,
+          82
+        ],
+        "hand_right": [
+          83,
+          82
+        ]
+      }
+    },
+    "W": {
+      "top": 67,
+      "bot": 1181,
+      "H": 1114,
+      "neck": 488,
+      "head": [
+        40,
+        11,
+        85,
+        53
+      ],
+      "anchors": {
+        "head": [
+          63,
+          53
+        ],
+        "hand_left": [
+          53,
+          83
+        ],
+        "hand_right": [
+          73,
+          83
+        ]
+      }
+    },
+    "NW": {
+      "top": 66,
+      "bot": 1181,
+      "H": 1115,
+      "neck": 486,
+      "head": [
+        38,
+        10,
+        82,
+        53
+      ],
+      "anchors": {
+        "head": [
+          60,
+          53
+        ],
+        "hand_left": [
+          40,
+          83
+        ],
+        "hand_right": [
+          84,
+          83
+        ]
+      }
+    },
+    "N": {
+      "top": 67,
+      "bot": 1182,
+      "H": 1115,
+      "neck": 487,
+      "head": [
+        42,
+        11,
+        84,
+        53
+      ],
+      "anchors": {
+        "head": [
+          63,
+          53
+        ],
+        "hand_left": [
+          37,
+          83
+        ],
+        "hand_right": [
+          90,
+          83
+        ]
+      }
+    }
+  },
+  "parts": {
+    "base_head": {
+      "id": "base_head",
+      "slot": "head",
+      "skinnable": true
+    },
+    "base_body": {
+      "id": "base_body",
+      "slot": "body_base",
+      "skinnable": true
+    }
+  },
+  "items": {},
+  "dye": {
+    "skinRef": [
+      25.263158798217773,
+      0.4749999940395355,
+      0.843137264251709
+    ],
+    "eyeBand": [
+      185,
+      255
+    ],
+    "cloth1Band": [
+      195,
+      255
+    ],
+    "cloth1L": 0.45,
+    "cloth2Band": [
+      38,
+      58
+    ],
+    "cloth2L": 0.55
+  }
+}

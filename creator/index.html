@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Create Your Hero</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;500&family=Pixelify+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./creator.css" />
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js" } }
+  </script>
+</head>
+<body>
+  <div class="sky" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="logo">Create Your Hero<span>สร้างตัวละคร</span></div>
+    <ol class="steps" id="steps"></ol>
+  </header>
+
+  <main class="layout">
+    <section class="window stage-window">
+      <div class="window-title"><span id="hero-name">—</span><small id="hero-line"></small></div>
+      <div class="stage" id="stage">
+        <div class="compass" id="compass" title="ทิศที่ตัวละครหัน"></div>
+        <button class="rot rot-l" id="rot-l" aria-label="หมุนซ้าย">◀</button>
+        <button class="rot rot-r" id="rot-r" aria-label="หมุนขวา">▶</button>
+      </div>
+      <div class="stage-controls">
+        <div class="chips" id="anim-chips"></div>
+        <div class="chips emotes" id="emote-chips"></div>
+      </div>
+    </section>
+
+    <section class="window panel-window">
+      <div class="window-title"><span id="step-title"></span><small id="step-sub"></small></div>
+      <div class="panel" id="panel"></div>
+    </section>
+  </main>
+
+  <footer class="summary window">
+    <div class="sum-badges" id="sum-badges"></div>
+    <dl class="sum-stats" id="sum-stats"></dl>
+    <div class="nav">
+      <button class="btn ghost" id="back">ย้อนกลับ</button>
+      <button class="btn primary" id="next">ถัดไป</button>
+    </div>
+  </footer>
+
+  <div class="loading" id="loading">กำลังโหลดชุดตัวละคร…</div>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

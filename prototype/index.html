@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Project DND — 2.5D Prototype</title>
+  <style>
+    :root { --panel: rgba(20, 16, 32, 0.78); --line: #6b5a8e; --text: #f3ecff; --gold: #ffd23a; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #000; color: var(--text);
+      font: 13px/1.4 "Trebuchet MS", "Segoe UI", sans-serif; }
+    #view { position: fixed; inset: 0; width: 100vw; height: 100vh; image-rendering: pixelated; display: block; }
+    .panel { position: fixed; background: var(--panel); border: 2px solid var(--line); border-radius: 6px;
+      padding: 8px 10px; box-shadow: 0 2px 0 #000; }
+    #status { top: 10px; left: 10px; width: 250px; }
+    #zone { font-weight: bold; color: var(--gold); }
+    #mode { float: right; font-size: 11px; padding: 0 6px; border-radius: 3px; background: #2f6f4a; }
+    body[data-mode="combat"] #mode { background: #a8323a; }
+    .hp { margin-top: 6px; height: 14px; background: #3a1820; border: 1px solid #000; border-radius: 3px; overflow: hidden; position: relative; }
+    #hp-fill { height: 100%; background: linear-gradient(#ff7a7a, #d23a3a); width: 100%; transition: width .25s; }
+    #hp-text { position: absolute; inset: 0; text-align: center; font-size: 11px; line-height: 14px; text-shadow: 0 1px 0 #000; }
+    #fps { margin-top: 4px; font-size: 11px; opacity: .6; }
+    #combat { top: 10px; left: 50%; transform: translateX(-50%); display: none; text-align: center; min-width: 320px; }
+    body[data-mode="combat"] #combat { display: block; }
+    #round { color: var(--gold); font-weight: bold; }
+    #turn-order { list-style: none; display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin: 6px 0; padding: 0; }
+    #turn-order li { padding: 2px 6px; border: 1px solid var(--line); border-radius: 3px; font-size: 11px; }
+    #turn-order li.current { background: var(--gold); color: #201030; border-color: var(--gold); }
+    #turn-order li.down { opacity: .35; text-decoration: line-through; }
+    #end-turn { margin-top: 6px; font: inherit; color: var(--text); background: #4a3a78; border: 2px solid var(--line);
+      border-radius: 4px; padding: 3px 12px; cursor: pointer; }
+    #end-turn:disabled { opacity: .4; cursor: default; }
+    #log-panel { left: 10px; bottom: 10px; width: 360px; max-width: calc(100vw - 20px); }
+    #log { list-style: none; margin: 0; padding: 0; max-height: 150px; overflow-y: auto; font-size: 12px; }
+    #log li.sys { color: #b9a8e8; } #log li.good { color: #8fe08a; } #log li.bad { color: #ff8a8a; }
+    #help { right: 10px; bottom: 10px; font-size: 11px; line-height: 1.6; }
+    kbd { background: #322850; border: 1px solid var(--line); border-radius: 3px; padding: 0 4px; }
+    #dice { position: fixed; left: 50%; top: 38%; transform: translate(-50%, -50%) scale(.9); opacity: 0; pointer-events: none;
+      transition: opacity .15s, transform .15s; text-align: center; }
+    #dice.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    .dice-label { font-weight: bold; text-shadow: 0 2px 0 #000; margin-bottom: 6px; }
+    .dice-row { display: flex; gap: 12px; justify-content: center; }
+    .die { width: 72px; height: 72px; display: grid; place-items: center; font-size: 28px; font-weight: bold; color: #201030;
+      background: linear-gradient(#fff8e0, #e8d8a8); clip-path: polygon(50% 0, 95% 25%, 95% 75%, 50% 100%, 5% 75%, 5% 25%);
+      text-shadow: 0 1px 0 #fff; }
+    .die[hidden] { display: none; }
+    .die.rolling { animation: spin .18s linear infinite; }
+    .die.nat20 { background: linear-gradient(#fff3a0, #ffc21a); }
+    .die.nat1 { background: linear-gradient(#ffb0b0, #c84040); }
+    .die.dropped { opacity: .35; }
+    @keyframes spin { 50% { transform: rotate(12deg) scale(.94); } }
+    .dice-result { margin-top: 8px; font-weight: bold; font-size: 15px; text-shadow: 0 2px 0 #000; }
+    .dice-result.ok { color: #8fe08a; } .dice-result.bad { color: #ff8a8a; }
+    #fade { position: fixed; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity .4s; }
+    #fade.on { opacity: 1; }
+    @media (max-width: 700px) { #help { display: none; } #log-panel { width: auto; right: 10px; } }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "lil-gui": "https://cdn.jsdelivr.net/npm/lil-gui@0.19.2/dist/lil-gui.esm.min.js"
+      }
+    }
+  </script>
+</head>
+<body data-mode="explore">
+  <div id="status" class="panel">
+    <span id="mode">EXPLORE</span><div id="zone">…</div>
+    <div class="hp"><div id="hp-fill"></div><div id="hp-text"></div></div>
+    <div id="fps"></div>
+  </div>
+
+  <div id="combat" class="panel">
+    <div id="round"></div>
+    <ul id="turn-order"></ul>
+    <div id="turn-info"></div>
+    <button id="end-turn" disabled>End turn (Space)</button>
+  </div>
+
+  <div id="log-panel" class="panel"><ul id="log"></ul></div>
+
+  <div id="help" class="panel">
+    <kbd>Click</kbd> move / attack · <kbd>Right-drag</kbd> rotate · <kbd>Wheel</kbd> zoom<br />
+    <kbd>Q</kbd>/<kbd>E</kbd> rotate 45° · <kbd>X</kbd> sit · <kbd>1</kbd>–<kbd>6</kbd> emotes · <kbd>Space</kbd> end turn
+  </div>
+
+  <div id="dice">
+    <div class="dice-label"></div>
+    <div class="dice-row"><div class="die"></div><div class="die"></div></div>
+    <div class="dice-result"></div>
+  </div>
+  <div id="fade"></div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

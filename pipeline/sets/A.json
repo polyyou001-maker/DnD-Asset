@@ -1,0 +1,164 @@
+{
+  "label": "Body type A",
+  "base_prompt": "1girl, bald, grey t-shirt, black shorts, barefoot, blue eyes, closed mouth, light skin",
+  "part_prompt": "1girl, blue eyes, light skin",
+  "base_negative": "hair, long hair, short hair, bangs, ponytail, hat, hood, helmet, weapon, holding, cleavage, bodysuit, leaning, dynamic pose, walking, outstretched arm",
+  "view_prompt": {
+    "S": "looking at viewer",
+    "SW": "looking to the side",
+    "W": "from side, profile",
+    "NW": "from behind",
+    "N": "from behind, facing away"
+  },
+  "parts": {
+    "outfit_fighter": {
+      "mask": "outfit",
+      "slot": "body",
+      "class": "fighter",
+      "prompt": "silver plate armor, breastplate, pauldrons, blue tabard, brown leather belt, gauntlets, armored boots",
+      "negative": "bare legs, thighs"
+    },
+    "outfit_cleric": {
+      "mask": "outfit",
+      "slot": "body",
+      "class": "cleric",
+      "prompt": "white priest robe, long robe, ankle-length robe, blue trim, gold embroidery, capelet, long sleeves, brown boots",
+      "negative": "bare legs, thighs, shorts, short dress",
+      "cn_weight": 0.2
+    },
+    "outfit_rogue": {
+      "mask": "outfit",
+      "slot": "body",
+      "class": "rogue",
+      "prompt": "dark brown leather armor, blue short cape, belt pouches, fingerless gloves, black shorts, thigh boots",
+      "negative": "gold, gold armor, gauntlets"
+    },
+    "outfit_wizard": {
+      "mask": "outfit",
+      "slot": "body",
+      "class": "wizard",
+      "prompt": "blue wizard robe, long robe, floor-length robe, robe covering legs, wide sleeves, gold trim, brown belt, white collar",
+      "negative": "bare legs, thighs, knees, shorts, short dress, miniskirt, shadow, pedestal, stand, block, platform",
+      "cn_weight": 0,
+      "fill": 1,
+      "denoise": 0.95
+    },
+    "hair_bob": {
+      "mask": "hair_medium",
+      "slot": "hair",
+      "prompt": "white hair, bob cut, bangs",
+      "negative": "hat"
+    },
+    "hair_long": {
+      "mask": "hair_long",
+      "slot": "hair",
+      "prompt": "white hair, very long hair, straight hair, bangs",
+      "negative": "hat, halo"
+    },
+    "hair_short": {
+      "mask": "hair_short",
+      "slot": "hair",
+      "prompt": "white hair, short hair, messy hair",
+      "negative": "hat"
+    },
+    "hair_twintails": {
+      "mask": "hair_tails",
+      "slot": "hair",
+      "prompt": "white hair, twintails, bangs, hair ribbon",
+      "negative": "hat"
+    },
+    "hat_witch": {
+      "mask": "headgear",
+      "slot": "head_top",
+      "prompt": "blue witch hat, pointy hat, hat tip, wide brim",
+      "negative": "hair, bald",
+      "cn_weight": 0.15,
+      "borrow": {
+        "N": "S",
+        "NW": "SW"
+      }
+    },
+    "circlet": {
+      "mask": "headgear",
+      "slot": "head_top",
+      "prompt": "thin golden circlet, thin gold band around the head, small forehead jewel",
+      "negative": "hat, helmet, cap, hair, blonde hair, bangs",
+      "cn_weight": 0.5,
+      "denoise": 0.75
+    },
+    "ears_elf": {
+      "mask": "ears",
+      "slot": "ears",
+      "prompt": "pointy ears, elf",
+      "negative": "hair, hat"
+    }
+  },
+  "items": {
+    "longsword": {
+      "kind": "weapon",
+      "label": "Longsword",
+      "prompt": "single longsword, one sword, vertical, steel blade, cross guard, leather grip",
+      "length": 50,
+      "grip": [
+        0.5,
+        0.86
+      ],
+      "wide": "bottom"
+    },
+    "mace": {
+      "kind": "weapon",
+      "label": "Mace",
+      "prompt": "single flanged mace, one-handed mace, steel head on top of a short wooden handle, vertical",
+      "length": 38,
+      "grip": [
+        0.5,
+        0.85
+      ],
+      "wide": "top"
+    },
+    "dagger": {
+      "kind": "weapon",
+      "label": "Dagger",
+      "prompt": "dagger, short steel blade, small cross guard",
+      "length": 26,
+      "grip": [
+        0.5,
+        0.8
+      ],
+      "wide": "bottom"
+    },
+    "staff": {
+      "kind": "weapon",
+      "label": "Quarterstaff",
+      "prompt": "wooden wizard staff, blue crystal orb on top, long staff, wooden staff, long pole",
+      "length": 92,
+      "grip": [
+        0.5,
+        0.6
+      ],
+      "wide": "top"
+    },
+    "shield_kite": {
+      "kind": "shield",
+      "label": "Kite shield",
+      "prompt": "kite shield, blue and silver, heraldic emblem, front view",
+      "length": 40,
+      "grip": [
+        0.5,
+        0.5
+      ],
+      "wide": "any"
+    },
+    "shield_round": {
+      "kind": "shield",
+      "label": "Round shield",
+      "prompt": "round wooden shield, iron rim, front view",
+      "length": 32,
+      "grip": [
+        0.5,
+        0.5
+      ],
+      "wide": "any"
+    }
+  }
+}

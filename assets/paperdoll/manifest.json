@@ -1,0 +1,1990 @@
+{
+  "version": 1,
+  "cell": [
+    64,
+    64
+  ],
+  "origin": [
+    32,
+    61
+  ],
+  "drawn": [
+    "S",
+    "SW",
+    "W",
+    "NW",
+    "N"
+  ],
+  "mirror": {
+    "NE": "NW",
+    "E": "W",
+    "SE": "SW"
+  },
+  "anims": {
+    "idle": {
+      "frames": 2,
+      "fps": 3
+    },
+    "walk": {
+      "frames": 4,
+      "fps": 8
+    }
+  },
+  "layerOrder": {
+    "S": [
+      "hair_back",
+      "body",
+      "face",
+      "hair_front",
+      "head_low",
+      "head_mid",
+      "head_top",
+      "weapon",
+      "shield"
+    ],
+    "SW": [
+      "hair_back",
+      "body",
+      "face",
+      "hair_front",
+      "head_low",
+      "head_mid",
+      "head_top",
+      "weapon",
+      "shield"
+    ],
+    "W": [
+      "weapon",
+      "hair_back",
+      "body",
+      "face",
+      "hair_front",
+      "head_low",
+      "head_mid",
+      "head_top",
+      "shield"
+    ],
+    "NW": [
+      "weapon",
+      "body",
+      "face",
+      "hair_front",
+      "hair_back",
+      "head_low",
+      "head_mid",
+      "head_top",
+      "shield"
+    ],
+    "N": [
+      "weapon",
+      "shield",
+      "body",
+      "face",
+      "hair_front",
+      "hair_back",
+      "head_low",
+      "head_mid",
+      "head_top"
+    ]
+  },
+  "ramps": {
+    "hair": [
+      "#5a2e2a",
+      "#8c4a3a",
+      "#c2765a",
+      "#eab08c"
+    ],
+    "cloth1": [
+      "#1a2a5a",
+      "#2f55a0",
+      "#4a90d8",
+      "#98d0f8"
+    ],
+    "cloth2": [
+      "#7a1f2b",
+      "#c0303a",
+      "#f0605a",
+      "#f8a8a0"
+    ]
+  },
+  "dyes": {
+    "hair": {
+      "brown": [
+        "#5a2e2a",
+        "#8c4a3a",
+        "#c2765a",
+        "#eab08c"
+      ],
+      "blonde": [
+        "#8a4a10",
+        "#d08a20",
+        "#f8c840",
+        "#fff090"
+      ],
+      "red": [
+        "#7a1f2b",
+        "#c0303a",
+        "#f0605a",
+        "#f8a8a0"
+      ],
+      "blue": [
+        "#1a2a5a",
+        "#2f55a0",
+        "#4a90d8",
+        "#98d0f8"
+      ],
+      "silver": [
+        "#5e4a63",
+        "#8f7f94",
+        "#c6bccb",
+        "#f4f1f2"
+      ],
+      "black": [
+        "#1a1020",
+        "#3b2a40",
+        "#5e4a63",
+        "#8f7f94"
+      ]
+    },
+    "cloth1": {
+      "blue": [
+        "#1a2a5a",
+        "#2f55a0",
+        "#4a90d8",
+        "#98d0f8"
+      ],
+      "green": [
+        "#1f4a2a",
+        "#3a8040",
+        "#78c050",
+        "#c0e890"
+      ],
+      "purple": [
+        "#3a1f5a",
+        "#6a3aa0",
+        "#a070d0",
+        "#e0b0f0"
+      ],
+      "red": [
+        "#7a1f2b",
+        "#c0303a",
+        "#f0605a",
+        "#f8a8a0"
+      ],
+      "black": [
+        "#1a1020",
+        "#3b2a40",
+        "#5e4a63",
+        "#8f7f94"
+      ]
+    },
+    "cloth2": {
+      "red": [
+        "#7a1f2b",
+        "#c0303a",
+        "#f0605a",
+        "#f8a8a0"
+      ],
+      "gold": [
+        "#8a4a10",
+        "#d08a20",
+        "#f8c840",
+        "#fff090"
+      ],
+      "green": [
+        "#1f4a2a",
+        "#3a8040",
+        "#78c050",
+        "#c0e890"
+      ],
+      "blue": [
+        "#1a2a5a",
+        "#2f55a0",
+        "#4a90d8",
+        "#98d0f8"
+      ],
+      "purple": [
+        "#3a1f5a",
+        "#6a3aa0",
+        "#a070d0",
+        "#e0b0f0"
+      ]
+    }
+  },
+  "defaultLoadout": {
+    "body": "body_mage",
+    "hair": "hair_long",
+    "face": "face_basic",
+    "head_top": "hat_witch",
+    "head_mid": null,
+    "head_low": null,
+    "weapon": "staff",
+    "shield": null,
+    "effect": null,
+    "dye": {
+      "hair": "brown",
+      "cloth1": "blue",
+      "cloth2": "red"
+    }
+  },
+  "parts": {
+    "aura": {
+      "slot": "effect",
+      "kind": "effect",
+      "frames": 4,
+      "fps": 6,
+      "label": "Aura",
+      "sheet": "parts/aura.png"
+    },
+    "body_knight": {
+      "slot": "body",
+      "kind": "animated",
+      "dye": [
+        "cloth1",
+        "cloth2"
+      ],
+      "label": "Knight",
+      "anchors": {
+        "idle": {
+          "S": [
+            {
+              "head": [
+                32,
+                24
+              ],
+              "hand_main": [
+                20,
+                44
+              ],
+              "hand_off": [
+                44,
+                44
+              ]
+            },
+            {
+              "head": [
+                32,
+                25
+              ],
+              "hand_main": [
+                20,
+                45
+              ],
+              "hand_off": [
+                44,
+                45
+              ]
+            }
+          ],
+          "SW": [
+            {
+              "head": [
+                31,
+                24
+              ],
+              "hand_main": [
+                22,
+                44
+              ],
+              "hand_off": [
+                42,
+                44
+              ]
+            },
+            {
+              "head": [
+                31,
+                25
+              ],
+              "hand_main": [
+                22,
+                45
+              ],
+              "hand_off": [
+                42,
+                45
+              ]
+            }
+          ],
+          "W": [
+            {
+              "head": [
+                30,
+                24
+              ],
+              "hand_main": [
+                33,
+                44
+              ],
+              "hand_off": [
+                30,
+                44
+              ]
+            },
+            {
+              "head": [
+                30,
+                25
+              ],
+              "hand_main": [
+                33,
+                45
+              ],
+              "hand_off": [
+                30,
+                45
+              ]
+            }
+          ],
+          "NW": [
+            {
+              "head": [
+                33,
+                24
+              ],
+              "hand_main": [
+                41,
+                44
+              ],
+              "hand_off": [
+                22,
+                44
+              ]
+            },
+            {
+              "head": [
+                33,
+                25
+              ],
+              "hand_main": [
+                41,
+                45
+              ],
+              "hand_off": [
+                22,
+                45
+              ]
+            }
+          ],
+          "N": [
+            {
+              "head": [
+                32,
+                24
+              ],
+              "hand_main": [
+                44,
+                44
+              ],
+              "hand_off": [
+                20,
+                44
+              ]
+            },
+            {
+              "head": [
+                32,
+                25
+              ],
+              "hand_main": [
+                44,
+                45
+              ],
+              "hand_off": [
+                20,
+                45
+              ]
+            }
+          ]
+        },
+        "walk": {
+          "S": [
+            {
+              "head": [
+                32,
+                24
+              ],
+              "hand_main": [
+                20,
+                44
+              ],
+              "hand_off": [
+                44,
+                44
+              ]
+            },
+            {
+              "head": [
+                32,
+                23
+              ],
+              "hand_main": [
+                20,
+                44
+              ],
+              "hand_off": [
+                44,
+                42
+              ]
+            },
+            {
+              "head": [
+                32,
+                24
+              ],
+              "hand_main": [
+                20,
+                44
+              ],
+              "hand_off": [
+                44,
+                44
+              ]
+            },
+            {
+              "head": [
+                32,
+                23
+              ],
+              "hand_main": [
+                20,
+                42
+              ],
+              "hand_off": [
+                44,
+                44
+              ]
+            }
+          ],
+          "SW": [
+            {
+              "head": [
+                31,
+                24
+              ],
+              "hand_main": [
+                22,
+                44
+              ],
+              "hand_off": [
+                42,
+                44
+              ]
+            },
+            {
+              "head": [
+                31,
+                23
+              ],
+              "hand_main": [
+                22,
+                44
+              ],
+              "hand_off": [
+                42,
+                42
+              ]
+            },
+            {
+              "head": [
+                31,
+                24
+              ],
+              "hand_main": [
+                22,
+                44
+              ],
+              "hand_off": [
+                42,
+                44
+              ]
+            },
+            {
+              "head": [
+                31,
+                23
+              ],
+              "hand_main": [
+                22,
+                42
+              ],
+              "hand_off": [
+                42,
+                44
+              ]
+            }
+          ],
+          "W": [
+            {
+              "head": [
+                30,
+                24
+              ],
+              "hand_main": [
+                33,
+                44
+              ],
+              "hand_off": [
+                30,
+                44
+              ]
+            },
+            {
+              "head": [
+                30,
+                23
+              ],
+              "hand_main": [
+                33,
+                44
+              ],
+              "hand_off": [
+                30,
+                42
+              ]
+            },
+            {
+              "head": [
+                30,
+                24
+              ],
+              "hand_main": [
+                33,
+                44
+              ],
+              "hand_off": [
+                30,
+                44
+              ]
+            },
+            {
+              "head": [
+                30,
+                23
+              ],
+              "hand_main": [
+                33,
+                42
+              ],
+              "hand_off": [
+                30,
+                44
+              ]
+            }
+          ],
+          "NW": [
+            {
+              "head": [
+                33,
+                24
+              ],
+              "hand_main": [
+                41,
+                44
+              ],
+              "hand_off": [
+                22,
+                44
+              ]
+            },
+            {
+              "head": [
+                33,
+                23
+              ],
+              "hand_main": [
+                41,
+                44
+              ],
+              "hand_off": [
+                22,
+                42
+              ]
+            },
+            {
+              "head": [
+                33,
+                24
+              ],
+              "hand_main": [
+                41,
+                44
+              ],
+              "hand_off": [
+                22,
+                44
+              ]
+            },
+            {
+              "head": [
+                33,
+                23
+              ],
+              "hand_main": [
+                41,
+                42
+              ],
+              "hand_off": [
+                22,
+                44
+              ]
+            }
+          ],
+          "N": [
+            {
+              "head": [
+                32,
+                24
+              ],
+              "hand_main": [
+                44,
+                44
+              ],
+              "hand_off": [
+                20,
+                44
+              ]
+            },
+            {
+              "head": [
+                32,
+                23
+              ],
+              "hand_main": [
+                44,
+                44
+              ],
+              "hand_off": [
+                20,
+                42
+              ]
+            },
+            {
+              "head": [
+                32,
+                24
+              ],
+              "hand_main": [
+                44,
+                44
+              ],
+              "hand_off": [
+                20,
+                44
+              ]
+            },
+            {
+              "head": [
+                32,
+                23
+              ],
+              "hand_main": [
+                44,
+                42
+              ],
+              "hand_off": [
+                20,
+                44
+              ]
+            }
+          ]
+        }
+      },
+      "sheet": "parts/body_knight.png"
+    },
+    "body_mage": {
+      "slot": "body",
+      "kind": "animated",
+      "dye": [
+        "cloth1",
+        "cloth2"
+      ],
+      "label": "Mage",
+      "anchors": {
+        "idle": {
+          "S": [
+            {
+              "head": [
+                32,
+                24
+              ],
+              "hand_main": [
+                20,
+                44
+              ],
+              "hand_off": [
+                44,
+                44
+              ]
+            },
+            {
+              "head": [
+                32,
+                25
+              ],
+              "hand_main": [
+                20,
+                45
+              ],
+              "hand_off": [
+                44,
+                45
+              ]
+            }
+          ],
+          "SW": [
+            {
+              "head": [
+                31,
+                24
+              ],
+              "hand_main": [
+                22,
+                44
+              ],
+              "hand_off": [
+                42,
+                44
+              ]
+            },
+            {
+              "head": [
+                31,
+                25
+              ],
+              "hand_main": [
+                22,
+                45
+              ],
+              "hand_off": [
+                42,
+                45
+              ]
+            }
+          ],
+          "W": [
+            {
+              "head": [
+                30,
+                24
+              ],
+              "hand_main": [
+                33,
+                44
+              ],
+              "hand_off": [
+                30,
+                44
+              ]
+            },
+            {
+              "head": [
+                30,
+                25
+              ],
+              "hand_main": [
+                33,
+                45
+              ],
+              "hand_off": [
+                30,
+                45
+              ]
+            }
+          ],
+          "NW": [
+            {
+              "head": [
+                33,
+                24
+              ],
+              "hand_main": [
+                41,
+                44
+              ],
+              "hand_off": [
+                22,
+                44
+              ]
+            },
+            {
+              "head": [
+                33,
+                25
+              ],
+              "hand_main": [
+                41,
+                45
+              ],
+              "hand_off": [
+                22,
+                45
+              ]
+            }
+          ],
+          "N": [
+            {
+              "head": [
+                32,
+                24
+              ],
+              "hand_main": [
+                44,
+                44
+              ],
+              "hand_off": [
+                20,
+                44
+              ]
+            },
+            {
+              "head": [
+                32,
+                25
+              ],
+              "hand_main": [
+                44,
+                45
+              ],
+              "hand_off": [
+                20,
+                45
+              ]
+            }
+          ]
+        },
+        "walk": {
+          "S": [
+            {
+              "head": [
+                32,
+                24
+              ],
+              "hand_main": [
+                20,
+                44
+              ],
+              "hand_off": [
+                44,
+                44
+              ]
+            },
+            {
+              "head": [
+                32,
+                23
+              ],
+              "hand_main": [
+                20,
+                44
+              ],
+              "hand_off": [
+                44,
+                42
+              ]
+            },
+            {
+              "head": [
+                32,
+                24
+              ],
+              "hand_main": [
+                20,
+                44
+              ],
+              "hand_off": [
+                44,
+                44
+              ]
+            },
+            {
+              "head": [
+                32,
+                23
+              ],
+              "hand_main": [
+                20,
+                42
+              ],
+              "hand_off": [
+                44,
+                44
+              ]
+            }
+          ],
+          "SW": [
+            {
+              "head": [
+                31,
+                24
+              ],
+              "hand_main": [
+                22,
+                44
+              ],
+              "hand_off": [
+                42,
+                44
+              ]
+            },
+            {
+              "head": [
+                31,
+                23
+              ],
+              "hand_main": [
+                22,
+                44
+              ],
+              "hand_off": [
+                42,
+                42
+              ]
+            },
+            {
+              "head": [
+                31,
+                24
+              ],
+              "hand_main": [
+                22,
+                44
+              ],
+              "hand_off": [
+                42,
+                44
+              ]
+            },
+            {
+              "head": [
+                31,
+                23
+              ],
+              "hand_main": [
+                22,
+                42
+              ],
+              "hand_off": [
+                42,
+                44
+              ]
+            }
+          ],
+          "W": [
+            {
+              "head": [
+                30,
+                24
+              ],
+              "hand_main": [
+                33,
+                44
+              ],
+              "hand_off": [
+                30,
+                44
+              ]
+            },
+            {
+              "head": [
+                30,
+                23
+              ],
+              "hand_main": [
+                33,
+                44
+              ],
+              "hand_off": [
+                30,
+                42
+              ]
+            },
+            {
+              "head": [
+                30,
+                24
+              ],
+              "hand_main": [
+                33,
+                44
+              ],
+              "hand_off": [
+                30,
+                44
+              ]
+            },
+            {
+              "head": [
+                30,
+                23
+              ],
+              "hand_main": [
+                33,
+                42
+              ],
+              "hand_off": [
+                30,
+                44
+              ]
+            }
+          ],
+          "NW": [
+            {
+              "head": [
+                33,
+                24
+              ],
+              "hand_main": [
+                41,
+                44
+              ],
+              "hand_off": [
+                22,
+                44
+              ]
+            },
+            {
+              "head": [
+                33,
+                23
+              ],
+              "hand_main": [
+                41,
+                44
+              ],
+              "hand_off": [
+                22,
+                42
+              ]
+            },
+            {
+              "head": [
+                33,
+                24
+              ],
+              "hand_main": [
+                41,
+                44
+              ],
+              "hand_off": [
+                22,
+                44
+              ]
+            },
+            {
+              "head": [
+                33,
+                23
+              ],
+              "hand_main": [
+                41,
+                42
+              ],
+              "hand_off": [
+                22,
+                44
+              ]
+            }
+          ],
+          "N": [
+            {
+              "head": [
+                32,
+                24
+              ],
+              "hand_main": [
+                44,
+                44
+              ],
+              "hand_off": [
+                20,
+                44
+              ]
+            },
+            {
+              "head": [
+                32,
+                23
+              ],
+              "hand_main": [
+                44,
+                44
+              ],
+              "hand_off": [
+                20,
+                42
+              ]
+            },
+            {
+              "head": [
+                32,
+                24
+              ],
+              "hand_main": [
+                44,
+                44
+              ],
+              "hand_off": [
+                20,
+                44
+              ]
+            },
+            {
+              "head": [
+                32,
+                23
+              ],
+              "hand_main": [
+                44,
+                42
+              ],
+              "hand_off": [
+                20,
+                44
+              ]
+            }
+          ]
+        }
+      },
+      "sheet": "parts/body_mage.png"
+    },
+    "body_rogue": {
+      "slot": "body",
+      "kind": "animated",
+      "dye": [
+        "cloth1",
+        "cloth2"
+      ],
+      "label": "Rogue",
+      "anchors": {
+        "idle": {
+          "S": [
+            {
+              "head": [
+                32,
+                24
+              ],
+              "hand_main": [
+                21,
+                44
+              ],
+              "hand_off": [
+                43,
+                44
+              ]
+            },
+            {
+              "head": [
+                32,
+                25
+              ],
+              "hand_main": [
+                21,
+                45
+              ],
+              "hand_off": [
+                43,
+                45
+              ]
+            }
+          ],
+          "SW": [
+            {
+              "head": [
+                31,
+                24
+              ],
+              "hand_main": [
+                23,
+                44
+              ],
+              "hand_off": [
+                41,
+                44
+              ]
+            },
+            {
+              "head": [
+                31,
+                25
+              ],
+              "hand_main": [
+                23,
+                45
+              ],
+              "hand_off": [
+                41,
+                45
+              ]
+            }
+          ],
+          "W": [
+            {
+              "head": [
+                30,
+                24
+              ],
+              "hand_main": [
+                33,
+                44
+              ],
+              "hand_off": [
+                30,
+                44
+              ]
+            },
+            {
+              "head": [
+                30,
+                25
+              ],
+              "hand_main": [
+                33,
+                45
+              ],
+              "hand_off": [
+                30,
+                45
+              ]
+            }
+          ],
+          "NW": [
+            {
+              "head": [
+                33,
+                24
+              ],
+              "hand_main": [
+                40,
+                44
+              ],
+              "hand_off": [
+                23,
+                44
+              ]
+            },
+            {
+              "head": [
+                33,
+                25
+              ],
+              "hand_main": [
+                40,
+                45
+              ],
+              "hand_off": [
+                23,
+                45
+              ]
+            }
+          ],
+          "N": [
+            {
+              "head": [
+                32,
+                24
+              ],
+              "hand_main": [
+                43,
+                44
+              ],
+              "hand_off": [
+                21,
+                44
+              ]
+            },
+            {
+              "head": [
+                32,
+                25
+              ],
+              "hand_main": [
+                43,
+                45
+              ],
+              "hand_off": [
+                21,
+                45
+              ]
+            }
+          ]
+        },
+        "walk": {
+          "S": [
+            {
+              "head": [
+                32,
+                24
+              ],
+              "hand_main": [
+                21,
+                44
+              ],
+              "hand_off": [
+                43,
+                44
+              ]
+            },
+            {
+              "head": [
+                32,
+                23
+              ],
+              "hand_main": [
+                21,
+                44
+              ],
+              "hand_off": [
+                43,
+                42
+              ]
+            },
+            {
+              "head": [
+                32,
+                24
+              ],
+              "hand_main": [
+                21,
+                44
+              ],
+              "hand_off": [
+                43,
+                44
+              ]
+            },
+            {
+              "head": [
+                32,
+                23
+              ],
+              "hand_main": [
+                21,
+                42
+              ],
+              "hand_off": [
+                43,
+                44
+              ]
+            }
+          ],
+          "SW": [
+            {
+              "head": [
+                31,
+                24
+              ],
+              "hand_main": [
+                23,
+                44
+              ],
+              "hand_off": [
+                41,
+                44
+              ]
+            },
+            {
+              "head": [
+                31,
+                23
+              ],
+              "hand_main": [
+                23,
+                44
+              ],
+              "hand_off": [
+                41,
+                42
+              ]
+            },
+            {
+              "head": [
+                31,
+                24
+              ],
+              "hand_main": [
+                23,
+                44
+              ],
+              "hand_off": [
+                41,
+                44
+              ]
+            },
+            {
+              "head": [
+                31,
+                23
+              ],
+              "hand_main": [
+                23,
+                42
+              ],
+              "hand_off": [
+                41,
+                44
+              ]
+            }
+          ],
+          "W": [
+            {
+              "head": [
+                30,
+                24
+              ],
+              "hand_main": [
+                33,
+                44
+              ],
+              "hand_off": [
+                30,
+                44
+              ]
+            },
+            {
+              "head": [
+                30,
+                23
+              ],
+              "hand_main": [
+                33,
+                44
+              ],
+              "hand_off": [
+                30,
+                42
+              ]
+            },
+            {
+              "head": [
+                30,
+                24
+              ],
+              "hand_main": [
+                33,
+                44
+              ],
+              "hand_off": [
+                30,
+                44
+              ]
+            },
+            {
+              "head": [
+                30,
+                23
+              ],
+              "hand_main": [
+                33,
+                42
+              ],
+              "hand_off": [
+                30,
+                44
+              ]
+            }
+          ],
+          "NW": [
+            {
+              "head": [
+                33,
+                24
+              ],
+              "hand_main": [
+                40,
+                44
+              ],
+              "hand_off": [
+                23,
+                44
+              ]
+            },
+            {
+              "head": [
+                33,
+                23
+              ],
+              "hand_main": [
+                40,
+                44
+              ],
+              "hand_off": [
+                23,
+                42
+              ]
+            },
+            {
+              "head": [
+                33,
+                24
+              ],
+              "hand_main": [
+                40,
+                44
+              ],
+              "hand_off": [
+                23,
+                44
+              ]
+            },
+            {
+              "head": [
+                33,
+                23
+              ],
+              "hand_main": [
+                40,
+                42
+              ],
+              "hand_off": [
+                23,
+                44
+              ]
+            }
+          ],
+          "N": [
+            {
+              "head": [
+                32,
+                24
+              ],
+              "hand_main": [
+                43,
+                44
+              ],
+              "hand_off": [
+                21,
+                44
+              ]
+            },
+            {
+              "head": [
+                32,
+                23
+              ],
+              "hand_main": [
+                43,
+                44
+              ],
+              "hand_off": [
+                21,
+                42
+              ]
+            },
+            {
+              "head": [
+                32,
+                24
+              ],
+              "hand_main": [
+                43,
+                44
+              ],
+              "hand_off": [
+                21,
+                44
+              ]
+            },
+            {
+              "head": [
+                32,
+                23
+              ],
+              "hand_main": [
+                43,
+                42
+              ],
+              "hand_off": [
+                21,
+                44
+              ]
+            }
+          ]
+        }
+      },
+      "sheet": "parts/body_rogue.png"
+    },
+    "face_basic": {
+      "kind": "static",
+      "slot": "face",
+      "attach": "head",
+      "label": "Basic",
+      "pieces": [
+        {
+          "layer": "face",
+          "row": 0
+        }
+      ],
+      "pivot": {
+        "S": [
+          32,
+          24
+        ],
+        "SW": [
+          32,
+          24
+        ],
+        "W": [
+          32,
+          24
+        ],
+        "NW": [
+          32,
+          24
+        ],
+        "N": [
+          32,
+          24
+        ]
+      },
+      "sheet": "parts/face_basic.png"
+    },
+    "glasses": {
+      "kind": "static",
+      "slot": "head_mid",
+      "attach": "head",
+      "occupies": [
+        "head_mid"
+      ],
+      "label": "Glasses",
+      "pieces": [
+        {
+          "layer": "head_mid",
+          "row": 0
+        }
+      ],
+      "pivot": {
+        "S": [
+          32,
+          24
+        ],
+        "SW": [
+          32,
+          24
+        ],
+        "W": [
+          32,
+          24
+        ],
+        "NW": [
+          32,
+          24
+        ],
+        "N": [
+          32,
+          24
+        ]
+      },
+      "sheet": "parts/glasses.png"
+    },
+    "hair_long": {
+      "kind": "static",
+      "slot": "hair",
+      "attach": "head",
+      "dye": [
+        "hair"
+      ],
+      "label": "Long",
+      "pieces": [
+        {
+          "layer": "hair_back",
+          "row": 0
+        },
+        {
+          "layer": "hair_front",
+          "row": 1
+        }
+      ],
+      "pivot": {
+        "S": [
+          32,
+          24
+        ],
+        "SW": [
+          32,
+          24
+        ],
+        "W": [
+          32,
+          24
+        ],
+        "NW": [
+          32,
+          24
+        ],
+        "N": [
+          32,
+          24
+        ]
+      },
+      "sheet": "parts/hair_long.png"
+    },
+    "hair_short": {
+      "kind": "static",
+      "slot": "hair",
+      "attach": "head",
+      "dye": [
+        "hair"
+      ],
+      "label": "Short",
+      "pieces": [
+        {
+          "layer": "hair_back",
+          "row": 0
+        },
+        {
+          "layer": "hair_front",
+          "row": 1
+        }
+      ],
+      "pivot": {
+        "S": [
+          32,
+          24
+        ],
+        "SW": [
+          32,
+          24
+        ],
+        "W": [
+          32,
+          24
+        ],
+        "NW": [
+          32,
+          24
+        ],
+        "N": [
+          32,
+          24
+        ]
+      },
+      "sheet": "parts/hair_short.png"
+    },
+    "hat_witch": {
+      "kind": "static",
+      "slot": "head_top",
+      "attach": "head",
+      "occupies": [
+        "head_top"
+      ],
+      "label": "Witch hat",
+      "pieces": [
+        {
+          "layer": "head_top",
+          "row": 0
+        }
+      ],
+      "pivot": {
+        "S": [
+          32,
+          24
+        ],
+        "SW": [
+          32,
+          24
+        ],
+        "W": [
+          32,
+          24
+        ],
+        "NW": [
+          32,
+          24
+        ],
+        "N": [
+          32,
+          24
+        ]
+      },
+      "sheet": "parts/hat_witch.png"
+    },
+    "helm_full": {
+      "kind": "static",
+      "slot": "head_top",
+      "attach": "head",
+      "occupies": [
+        "head_top",
+        "head_mid",
+        "head_low"
+      ],
+      "hides": [
+        "hair_front",
+        "hair_back"
+      ],
+      "label": "Full helm",
+      "pieces": [
+        {
+          "layer": "head_top",
+          "row": 0
+        }
+      ],
+      "pivot": {
+        "S": [
+          32,
+          24
+        ],
+        "SW": [
+          32,
+          24
+        ],
+        "W": [
+          32,
+          24
+        ],
+        "NW": [
+          32,
+          24
+        ],
+        "N": [
+          32,
+          24
+        ]
+      },
+      "sheet": "parts/helm_full.png"
+    },
+    "scarf": {
+      "kind": "static",
+      "slot": "head_low",
+      "attach": "head",
+      "occupies": [
+        "head_low"
+      ],
+      "label": "Scarf",
+      "pieces": [
+        {
+          "layer": "head_low",
+          "row": 0
+        }
+      ],
+      "pivot": {
+        "S": [
+          32,
+          24
+        ],
+        "SW": [
+          32,
+          24
+        ],
+        "W": [
+          32,
+          24
+        ],
+        "NW": [
+          32,
+          24
+        ],
+        "N": [
+          32,
+          24
+        ]
+      },
+      "sheet": "parts/scarf.png"
+    },
+    "shield_round": {
+      "kind": "static",
+      "slot": "shield",
+      "attach": "hand_off",
+      "label": "Round shield",
+      "pieces": [
+        {
+          "layer": "shield",
+          "row": 0
+        }
+      ],
+      "pivot": {
+        "S": [
+          32,
+          40
+        ],
+        "SW": [
+          32,
+          40
+        ],
+        "W": [
+          32,
+          40
+        ],
+        "NW": [
+          32,
+          40
+        ],
+        "N": [
+          32,
+          40
+        ]
+      },
+      "sheet": "parts/shield_round.png"
+    },
+    "staff": {
+      "kind": "static",
+      "slot": "weapon",
+      "attach": "hand_main",
+      "label": "Staff",
+      "pieces": [
+        {
+          "layer": "weapon",
+          "row": 0
+        }
+      ],
+      "pivot": {
+        "S": [
+          32,
+          40
+        ],
+        "SW": [
+          32,
+          40
+        ],
+        "W": [
+          32,
+          40
+        ],
+        "NW": [
+          32,
+          40
+        ],
+        "N": [
+          32,
+          40
+        ]
+      },
+      "sheet": "parts/staff.png"
+    },
+    "sword": {
+      "kind": "static",
+      "slot": "weapon",
+      "attach": "hand_main",
+      "label": "Sword",
+      "pieces": [
+        {
+          "layer": "weapon",
+          "row": 0
+        }
+      ],
+      "pivot": {
+        "S": [
+          32,
+          40
+        ],
+        "SW": [
+          32,
+          40
+        ],
+        "W": [
+          32,
+          40
+        ],
+        "NW": [
+          32,
+          40
+        ],
+        "N": [
+          32,
+          40
+        ]
+      },
+      "sheet": "parts/sword.png"
+    }
+  }
+}

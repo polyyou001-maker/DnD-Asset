@@ -1,0 +1,34 @@
+{
+  "kind": "static",
+  "slot": "face",
+  "attach": "head",
+  "label": "Basic",
+  "pieces": [
+    {
+      "layer": "face",
+      "row": 0
+    }
+  ],
+  "pivot": {
+    "S": [
+      32,
+      24
+    ],
+    "SW": [
+      32,
+      24
+    ],
+    "W": [
+      32,
+      24
+    ],
+    "NW": [
+      32,
+      24
+    ],
+    "N": [
+      32,
+      24
+    ]
+  }
+}

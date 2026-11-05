@@ -1,0 +1,11 @@
+{
+  "name": "test_batch",
+  "preset": "elin_sprite",
+  "assets": [
+    {"id": "mage_S",  "group": "mage", "direction": "S",  "seed": 1001, "prompt": "1girl, mage, blue robe, brown hair, short hair, arms at sides"},
+    {"id": "mage_SW", "group": "mage", "direction": "SW", "seed": 1001, "prompt": "1girl, mage, blue robe, brown hair, short hair, arms at sides"},
+    {"id": "mage_W",  "group": "mage", "direction": "W",  "seed": 1001, "prompt": "1girl, mage, blue robe, brown hair, short hair, arms at sides"},
+    {"id": "mage_NW", "group": "mage", "direction": "NW", "seed": 1001, "prompt": "1girl, mage, blue robe, brown hair, short hair, arms at sides"},
+    {"id": "mage_N",  "group": "mage", "direction": "N",  "seed": 1001, "prompt": "1girl, mage, blue robe, brown hair, short hair, arms at sides"}
+  ]
+}
