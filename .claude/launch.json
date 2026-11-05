@@ -4,13 +4,22 @@
     {
       "name": "paperdoll-preview",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8765", "--directory", "D:/Heavenwatcher/stable-diffusion-webui/Project DND"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8765",
+        "--directory",
+        "D:/Heavenwatcher/stable-diffusion-webui/Project DND"
+      ],
       "port": 8765
     },
     {
       "name": "prototype",
       "runtimeExecutable": "C:/Users/polyy/AppData/Local/Programs/Python/Python310/python.exe",
-      "runtimeArgs": ["-m", "http.server", "5180", "--bind", "127.0.0.1"],
+      "runtimeArgs": [
+        "tools/devserver.py",
+        "5180"
+      ],
       "port": 5180
     }
   ]

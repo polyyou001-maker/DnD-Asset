@@ -13,15 +13,32 @@ export const DIRS = ['S', 'SW', 'W', 'NW', 'N'];
 const CELL = 128;
 const FEET = [64, 122];
 
-// state -> frames as [{ dy, dx, upper, lower, lean, swing, squash, rotate }]
+// state -> frames as [{ dy, dx, upper, lean, swing, squash, rotate, raise, thrust, aim, glow, block }]
+//   lean    px toward the facing direction (negative = wind-up / knock-back)
+//   swing   weapon angle in degrees; positive swings toward the facing side
+//   aim     point the weapon along the facing direction first (then add swing)
+//   thrust  px the weapon moves along the facing direction; raise: px up (negative)
+//   glow    staff tip glow; block: px the shield moves forward and is held in front
 const ANIMS = {
   idle: { fps: 3, loop: true, frames: [{}, { upper: 1 }] },
   walk: { fps: 8, loop: true, frames: [{ dy: 0, dx: 0 }, { dy: -2, dx: 1 }, { dy: 0, dx: 0 }, { dy: -2, dx: -1 }] },
-  attack: { fps: 10, loop: false, frames: [{ lean: -1, swing: -60 }, { lean: 0, swing: -110 }, { lean: 3, swing: 40 }, { lean: 1, swing: 10 }] },
   sit: { fps: 1, loop: true, frames: [{ squash: 0.72, upper: 0 }] },
   hit: { fps: 8, loop: false, frames: [{ lean: -3 }, { lean: -1 }] },
   dead: { fps: 4, loop: false, frames: [{ squash: 0.6 }, { rotate: true }] },
+  block: { fps: 6, loop: false, frames: [{ block: 2, swing: -20 }, { block: 4, swing: -25 }, { block: 4, swing: -25 }, { block: 2, swing: -10 }] },
 };
+
+// One attack per weapon style; `hit` is the frame where the blow lands (for hit effects).
+export const ATTACKS = {
+  // angle 0 = item upright; wind-ups tilt it back over the shoulder (negative), blows swing it forward
+  slash: { fps: 12, hit: 2, frames: [{ lean: -1, swing: -35 }, { lean: -1, swing: -60, upper: -1 }, { lean: 3, swing: 70, upper: 1 }, { lean: 2, swing: 115 }, { lean: 1, swing: 40 }] },
+  smash: { fps: 9, hit: 2, frames: [{ raise: -6, swing: -30, upper: -1 }, { raise: -10, swing: -55, upper: -1 }, { lean: 3, swing: 80, squash: 0.92 }, { lean: 3, swing: 125, squash: 0.9 }, { lean: 1, swing: 50 }] },
+  stab: { fps: 14, hit: 2, frames: [{ lean: -1, aim: true, thrust: -3 }, { lean: -1, aim: true, thrust: -2 }, { lean: 3, aim: true, thrust: 8 }, { lean: 2, aim: true, thrust: 6 }, { lean: 0, aim: true, thrust: 1 }] },
+  cast: { fps: 8, hit: 3, frames: [{ raise: -3, upper: -1 }, { raise: -8, upper: -1, swing: -15 }, { raise: -10, upper: -1, swing: -20, glow: true }, { raise: -8, lean: 2, swing: 30, glow: true }, { raise: -2, swing: 5 }] },
+  punch: { fps: 12, hit: 1, frames: [{ lean: -2 }, { lean: 4 }, { lean: 2 }, { lean: 0 }] },
+};
+const STYLE_BY_ITEM = { longsword: 'slash', mace: 'smash', dagger: 'stab', staff: 'cast' };
+export const attackStyle = (set, look) => (look.weapon ? set.items[look.weapon]?.style ?? STYLE_BY_ITEM[look.weapon] ?? 'slash' : 'punch');
 
 // screen direction "forward" for each drawn direction (lean/knock-back)
 const FORWARD = { S: [0, 1], SW: [-1, 0], W: [-1, 0], NW: [-1, 0], N: [0, -1] };
@@ -90,7 +107,7 @@ function drawGroup(ctx, list, dx, dy, squash = 1) {
   }
 }
 
-function drawItem(ctx, item, anchor, angleDeg, dx, dy) {
+function drawItem(ctx, item, anchor, angleDeg, dx, dy, glow = false) {
   if (!item?.img || !anchor) return;
   const [ax, ay] = anchor;
   const [gx, gy] = item.grip; // pixel in the item image held by the hand
@@ -98,6 +115,16 @@ function drawItem(ctx, item, anchor, angleDeg, dx, dy) {
   ctx.translate(ax + dx, ay + dy);
   ctx.rotate(((item.angle ?? 0) + angleDeg) * Math.PI / 180);
   ctx.drawImage(item.img, -gx, -gy);
+  if (glow) { // a soft light at the top of the item (staff orb)
+    const x = item.img.width / 2 - gx, y = 4 - gy;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, 9);
+    g.addColorStop(0, 'rgba(255,255,255,0.95)');
+    g.addColorStop(0.35, 'rgba(140,210,255,0.8)');
+    g.addColorStop(1, 'rgba(80,160,255,0)');
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.fillStyle = g;
+    ctx.fillRect(x - 9, y - 9, 18, 18);
+  }
   ctx.restore();
 }
 
@@ -113,17 +140,23 @@ function drawFrame(ctx, ox, oy, set, look, d, groups, f) {
   t.imageSmoothingEnabled = false;
   const weapon = set.items[look.weapon];
   const shield = set.items[look.shield];
-  const swing = f.swing ?? 0;
+  // swings mirror with the facing side; aim turns the item's "up" toward the facing direction
+  const side = fx < 0 ? -1 : 1;
+  const aim = f.aim ? Math.atan2(fx, -fy) * 180 / Math.PI : 0;
+  const swing = aim + (f.swing ?? 0) * side;
+  const wx = dx + (f.thrust ?? 0) * fx, wy = dy + (f.thrust ?? 0) * fy + (f.raise ?? 0);
+  const sx = dx + (f.block ?? 0) * fx, sy = dy + (f.block ?? 0) * fy - (f.block ? 4 : 0);
+  const shieldBehind = hands.shieldBehind && !f.block;
   const upperDy = dy + (f.upper ?? 0) + (f.squash ? Math.round((FEET[1] - geo.anchors.head[1]) * (1 - f.squash)) : 0);
   const mainAnchor = geo.anchors[hands.main];
   const offAnchor = geo.anchors[hands.off];
 
-  if (hands.weaponBehind) drawItem(t, weapon, mainAnchor, swing, dx, dy);
-  if (hands.shieldBehind) drawItem(t, shield, offAnchor, 0, dx, dy);
+  if (hands.weaponBehind) drawItem(t, weapon, mainAnchor, swing, wx, wy, f.glow);
+  if (shieldBehind) drawItem(t, shield, offAnchor, 0, sx, sy);
   drawGroup(t, groups.lower, dx, dy, f.squash ?? 1);
   drawGroup(t, groups.upper, dx, upperDy);
-  if (!hands.weaponBehind) drawItem(t, weapon, mainAnchor, swing, dx, dy);
-  if (!hands.shieldBehind) drawItem(t, shield, offAnchor, 0, dx, dy);
+  if (!hands.weaponBehind) drawItem(t, weapon, mainAnchor, swing, wx, wy, f.glow);
+  if (!shieldBehind) drawItem(t, shield, offAnchor, 0, sx, sy);
 
   const cell = chibify(tmp, geo.anchors.hand_left[1], look.legScale ?? set.manifest.legScale ?? 0.8);
   ctx.save();
@@ -171,15 +204,17 @@ function scaleCell(src, sx, sy) {
 
 // Compose a full animated sheet. Rows = state × 5 directions, columns = frames.
 export function compose(set, look) {
-  const states = Object.keys(ANIMS);
-  const cols = Math.max(...states.map((s) => ANIMS[s].frames.length));
+  const style = attackStyle(set, look);
+  const anims = { ...ANIMS, attack: { ...ATTACKS[style], loop: false } };
+  const states = Object.keys(anims);
+  const cols = Math.max(...states.map((s) => anims[s].frames.length));
   const sheetCanvas = canvas(cols * CELL, states.length * DIRS.length * CELL);
   const ctx = sheetCanvas.getContext('2d');
   ctx.imageSmoothingEnabled = false;
   const out = {};
   const groupsByDir = Object.fromEntries(DIRS.map((d) => [d, layersFor(set, look, d)]));
   states.forEach((name, si) => {
-    const a = ANIMS[name];
+    const a = anims[name];
     const dirs = DIRS.map((d, di) => a.frames.map((f, fi) => {
       const x = fi * CELL, y = (si * DIRS.length + di) * CELL;
       drawFrame(ctx, x, y, set, look, d, groupsByDir[d], f);
@@ -189,7 +224,10 @@ export function compose(set, look) {
   });
   const [sx, sy] = look.scale ?? [1, 1];
   // ppu = sprite pixels per world unit: the ~110 px figure stands ~1.4 tiles tall
-  return { image: scaleCell(sheetCanvas, sx, sy), frameW: CELL, frameH: CELL, feetY: FEET[1], ppu: 80, states: out };
+  return {
+    image: scaleCell(sheetCanvas, sx, sy), frameW: CELL, frameH: CELL, feetY: FEET[1], ppu: 80, states: out,
+    attackStyle: style, attackHitTime: ATTACKS[style].hit / ATTACKS[style].fps,
+  };
 }
 
 // Single still cell (for thumbnails / portraits).

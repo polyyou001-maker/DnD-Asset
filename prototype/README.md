@@ -7,10 +7,24 @@ Playable test bed for the visual direction and core loop: 2D billboard sprites (
 No build step: plain ES modules, Three.js r170 and lil-gui loaded from jsDelivr through an import map. Serve the `Project DND` folder over HTTP and open `/prototype/`:
 
 ```
-python -m http.server 5180 --bind 127.0.0.1
+python tools/devserver.py 5180
 ```
 
-Then open http://127.0.0.1:5180/prototype/ (in the desktop app, use the `prototype` entry in `.claude/launch.json`).
+`tools/devserver.py` is `http.server` with `Cache-Control: no-store`, so the browser never runs
+stale modules after an edit. Then open http://127.0.0.1:5180/prototype/ (in the desktop app, use
+the `prototype` entry in `.claude/launch.json`).
+
+## Animation lab
+
+http://127.0.0.1:5180/prototype/lab.html — a training yard with dummies for checking every
+animation of the real paper-doll set (`art/paperdoll2/A`) from all 8 directions.
+
+- Click ground to walk, click a dummy to walk up and attack it; WASD/arrows walk (camera-relative,
+  hold two keys for diagonals); Space/F attack, G block, H hit, K die/revive, X sit.
+- 1–5 weapon, B shield, Tab class. Each weapon has its own attack style (composer `ATTACKS`):
+  sword = slash, mace = smash, dagger = stab, staff = cast (fires a bolt), unarmed = punch.
+- The panel has every state, turn buttons, a turntable, repeat, a speed slider and a readout of
+  state, frame, drawn direction (and whether it is mirrored).
 
 ## Controls
 

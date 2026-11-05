@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Animation Lab</title>
+  <style>
+    :root { --panel: rgba(20, 16, 32, 0.82); --line: #6b5a8e; --text: #f3ecff; --gold: #ffd23a; --dim: #b9a8e8; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #000; color: var(--text);
+      font: 13px/1.4 "Trebuchet MS", "Segoe UI", sans-serif; }
+    #view { position: fixed; inset: 0; width: 100vw; height: 100vh; image-rendering: pixelated; display: block; }
+    .panel { position: fixed; background: var(--panel); border: 2px solid var(--line); border-radius: 6px;
+      padding: 8px 10px; box-shadow: 0 2px 0 #000; }
+    #bar { top: 10px; left: 10px; width: 292px; max-height: calc(100vh - 20px); overflow-y: auto; }
+    h1 { margin: 0 0 6px; font-size: 14px; color: var(--gold); }
+    h2 { margin: 10px 0 4px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+    .row { display: flex; flex-wrap: wrap; gap: 4px; }
+    button { font: inherit; font-size: 12px; color: var(--text); background: #3a2e5e; border: 1px solid var(--line);
+      border-radius: 4px; padding: 3px 8px; cursor: pointer; }
+    button:hover { background: #4a3a78; }
+    button.on { background: var(--gold); color: #201030; border-color: var(--gold); }
+    kbd { font-size: 10px; opacity: .7; margin-left: 3px; }
+    #readout { margin-top: 8px; font: 12px/1.5 ui-monospace, Consolas, monospace; color: #d8ccff; white-space: pre; }
+    label { display: flex; align-items: center; gap: 6px; font-size: 12px; margin-top: 4px; }
+    input[type=range] { flex: 1; }
+    #help { right: 10px; bottom: 10px; font-size: 11px; line-height: 1.7; max-width: 330px; }
+    #help b { color: var(--gold); }
+    @media (max-width: 700px) { #help { display: none; } #bar { width: calc(100vw - 20px); max-height: 46vh; } }
+  </style>
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js" } }
+  </script>
+</head>
+<body>
+  <div id="bar" class="panel">
+    <h1>Animation Lab</h1>
+    <h2>Class</h2><div class="row" id="classes"></div>
+    <h2>Weapon <kbd>1–5</kbd></h2><div class="row" id="weapons"></div>
+    <h2>Shield <kbd>B</kbd></h2><div class="row" id="shields"></div>
+    <h2>Play</h2><div class="row" id="states"></div>
+    <label>Speed <input id="speed" type="range" min="0.1" max="2" step="0.05" value="1" /><span id="speed-v">1.00×</span></label>
+    <div id="readout"></div>
+  </div>
+  <div id="help" class="panel">
+    <b>Mouse</b> click ground: walk · click dummy: walk up and attack<br />
+    <b>Right-drag</b> rotate · <b>Wheel</b> zoom<br />
+    <b>WASD / arrows</b> walk (hold; diagonals with two keys)<br />
+    <b>Space / F</b> attack · <b>G</b> block · <b>H</b> get hit · <b>K</b> die / revive<br />
+    <b>X</b> sit · <b>1–5</b> weapon · <b>B</b> shield · <b>Tab</b> next class · <b>Q/E</b> camera 45°
+  </div>
+  <script type="module" src="./src/lab.js"></script>
+</body>
+</html>

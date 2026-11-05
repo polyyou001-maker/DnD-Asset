@@ -20,6 +20,7 @@ const TILE_DEFS = {
     'F': { kind: 'path', h: 0, walk: false, prop: 'fountain' },
     'L': { kind: 'path', h: 0, walk: false, prop: 'lamp' },
     'P': { kind: 'grass', h: 1, walk: true, prop: 'portal' },
+    'd': { kind: 'path', h: 0, walk: true, monster: true },
   },
   dungeon: {
     '#': { kind: 'wall', h: 99, walk: false },
