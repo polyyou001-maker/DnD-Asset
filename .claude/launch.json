@@ -21,6 +21,15 @@
         "5180"
       ],
       "port": 5180
+    },
+    {
+      "name": "admin",
+      "runtimeExecutable": "D:/Heavenwatcher/stable-diffusion-webui/venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "tools/admin.py",
+        "5181"
+      ],
+      "port": 5181
     }
   ]
 }

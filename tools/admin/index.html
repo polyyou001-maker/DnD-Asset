@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Admin</title>
+<link rel="stylesheet" href="/tools/admin/admin.css">
+</head>
+<body>
+<div class="app">
+  <nav class="side">
+    <h1>Asset Admin</h1>
+    <ul id="categories"></ul>
+  </nav>
+  <main class="middle">
+    <div class="toolbar">
+      <input id="search" type="search" placeholder="ค้นหาชื่อ Asset" aria-label="ค้นหาชื่อ Asset">
+      <select id="filter-group" aria-label="กรองตามกลุ่ม"></select>
+      <select id="filter-state" aria-label="กรองตาม state"></select>
+      <select id="filter-dir" aria-label="กรองตามทิศ"></select>
+      <a id="zip" class="button" download>ดาวน์โหลดทั้งหมวด (ZIP)</a>
+    </div>
+    <div id="grid" class="grid"></div>
+  </main>
+  <aside id="details" class="details"><p class="hint">เลือก Asset จากตารางเพื่อดูรายละเอียด</p></aside>
+</div>
+<input id="file" type="file" accept="image/png" hidden>
+<div id="dropzone" class="dropzone" hidden>วางไฟล์ PNG เพื่ออัปโหลดแทน</div>
+<dialog id="review"></dialog>
+<div id="toast" class="toast" role="status" hidden></div>
+<script type="module" src="/tools/admin/admin.js"></script>
+</body>
+</html>

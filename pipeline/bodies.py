@@ -399,6 +399,24 @@ def load_cells(name, body, state, d):
     return cells, cut
 
 
+def apply_overrides(img, category, name, boxes):
+    """Hand edits from the asset admin go on last, exactly as uploaded (docs/specs/asset-admin.md)."""
+    keep = ROOT / "out" / "admin_history" / category / name / "pipeline"
+    applied = 0
+    for path in sorted((ART.parent / "overrides" / category / name).glob("*.png")):
+        box = boxes.get(path.stem)
+        with Image.open(path) as edit:
+            if box is None or edit.size != (box[2] - box[0], box[3] - box[1]):
+                print(f"  override without a matching frame: {path}")
+                continue
+            keep.mkdir(parents=True, exist_ok=True)
+            img.crop(box).save(keep / path.name)  # the admin's "use pipeline frame" restores this
+            img.paste(edit.convert("RGBA"), box[:2])
+        applied += 1
+    if applied:
+        print(f"  {applied} {category} overrides applied")
+
+
 def cmd_extract(a):
     name = a.body
     body = rig.BODIES[name]
@@ -441,6 +459,12 @@ def cmd_extract(a):
             dirs_rects.append(rects)
             anchors[state][d] = meta["joints"][state][d]
         out_states[state] = {**STATES[state], "dirs": dirs_rects}
+    apply_overrides(sheet, "body", name, {
+        f"{s}_{d}_{i}": (r["x"], r["y"], r["x"] + r["w"], r["y"] + r["h"])
+        for s, st in out_states.items() for d, rects in zip(rig.DIRS, st["dirs"]) for i, r in enumerate(rects)})
+    apply_overrides(eyes, "face", name, {
+        f"{s}_{d}_0": (c * EYES_W, r * EYES_H, (c + 1) * EYES_W, (r + 1) * EYES_H)
+        for c, s in enumerate(("open", "closed")) for r, d in enumerate(BLINK_DIRS)})
     art = ART / name
     art.mkdir(parents=True, exist_ok=True)
     sheet.save(art / "sheet.png")
