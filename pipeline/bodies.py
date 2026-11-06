@@ -5,7 +5,7 @@ Usage:
   python bodies.py redo <body> <state> <dir> <pair> [--seed N] [--ref idle_W_1]   regenerate one pair
   python bodies.py check <body> [--redo] [--seed 7]   list (or regenerate) pairs failing QC
   python bodies.py blink <body>       eyes-closed frames (S, SW, W), picked up by extract
-  python bodies.py extract <body>     -> art/bodies/<body>/sheet.png + sheet.json, out/.../qc.json
+  python bodies.py extract <body>     -> art/bodies/<body>/sheet.png + eyes.png + sheet.json, out/.../qc.json
   python bodies.py qc <body>          -> out/bodies/<body>/qc.html (animated previews)
 
 Run `python rig.py guides <body>` first. Spec: docs/specs/body-animation.md.
@@ -30,6 +30,8 @@ PPU = 87.5  # sprite px per world unit, same for every body (spec)
 EYE_PX = {"S": 1000, "SW": 1000, "W": 300, "NW": 0, "N": 0}  # blue head px: least on a face, most on a back
 BLINK_DIRS = ("S", "SW", "W")  # directions with a visible face
 SHIRT_MIN = 0.08  # share of grey in the torso box below which a frame has lost its shirt
+EYE_ZONE = {"S": (0.04, 0.96), "SW": (0.0, 0.76), "W": (0.0, 0.42)}  # share of the skull width, clear of the ear
+EYES_W, EYES_H = 64, 48  # eye sprite; its top middle sits on the frame's head anchor
 
 BASE = "bald, grey t-shirt, black shorts, barefoot, {eyes}light skin"  # eyes only where they show
 SPECIES = {
@@ -179,6 +181,54 @@ def match_tone(cell, target, body):
     return Image.fromarray(a, "RGBA")
 
 
+def split_eyes(cell, body, d):
+    """Cut brows and eyes off a face cell -> (faceless cell, eye sprite, sprite xy in the cell, blue px left)."""
+    a = np.asarray(cell).copy()
+    alpha = a[..., 3] > 0
+    top = int(np.nonzero(alpha.any(axis=1))[0].min())
+    h = int(body.head_h * rig.SCALE / rig.GRID)
+    xs = np.nonzero(alpha[top:top + int(h * 0.4)].any(axis=0))[0]  # the upper skull has no ears
+    left, w = int(xs.min()), int(xs.max() - xs.min())
+    zone = np.zeros(alpha.shape, bool)
+    zone[top + int(0.3 * h):top + int(0.82 * h), max(left - 3 * (d != "S"), 0) + int(EYE_ZONE[d][0] * w):left + int(EYE_ZONE[d][1] * w)] = True
+    square = np.ones((3, 3), np.uint8)
+    thin = ~cv2.morphologyEx(alpha.astype(np.uint8), cv2.MORPH_OPEN, square).astype(bool)
+    spike = zone & alpha & thin & (a[..., :3].mean(axis=2) < 90)  # dark lash tips, not the far ear
+    a[spike] = 0
+    alpha &= ~spike
+    inner = cv2.erode(alpha.astype(np.uint8), square).astype(bool)
+    rim = alpha & ~inner
+    rgb = a[..., :3].astype(int)
+    skin = (rgb[..., 0] > 215) & (rgb[..., 0] > rgb[..., 2] + 20) & (rgb[..., 1] > 175)
+    feat = zone & inner & ~skin
+    if d == "S":  # next to the outline there it is the ear, not the eye
+        feat &= cv2.erode(alpha.astype(np.uint8), np.ones((7, 7), np.uint8)).astype(bool)
+    # eye whites are skin-coloured: closing the shape keeps them with the eye
+    eye = cv2.morphologyEx(feat.astype(np.uint8), cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_CROSS, (5, 5))).astype(bool) & inner
+    sprite = np.zeros_like(a)
+    sprite[eye | spike] = np.asarray(cell)[eye | spike]
+    tone, line = np.median(a[skin & zone][:, :3], axis=0), np.median(a[rim][:, :3], axis=0)
+    a[cv2.dilate(eye.astype(np.uint8), square).astype(bool) & inner, :3] = tone
+    if d != "S":  # eyes drawn on the outline leave their dark and blue there
+        rgb = a[..., :3].astype(int)
+        a[zone & rim & ((rgb.mean(axis=2) < line.mean() - 30) | (rgb[..., 2] > rgb[..., 0])), :3] = line
+    ax = left if d == "W" else left + w // 2
+    x = ax - EYES_W // 2
+    rgb = a[..., :3].astype(int)
+    blue = int((zone & alpha & (rgb[..., 2] > rgb[..., 0] + 25) & (rgb[..., 2] > 110)).sum())
+    return Image.fromarray(a, "RGBA"), Image.fromarray(sprite, "RGBA").crop((x, top, x + EYES_W, top + EYES_H)), [x, top], blue
+
+
+def vivid_eyes(sprite):
+    """Saturate the grey-blue irises: the runtime dye (dye.js) only recolors saturated pixels."""
+    a = np.asarray(sprite).copy()
+    hls = cv2.cvtColor(a[..., :3], cv2.COLOR_RGB2HLS)
+    iris = (a[..., 3] > 0) & (a[..., 2].astype(int) > a[..., 0].astype(int) + 10)
+    hls[..., 2][iris] = np.maximum(hls[..., 2][iris], 128)
+    a[iris, :3] = cv2.cvtColor(hls, cv2.COLOR_HLS2RGB)[iris]
+    return Image.fromarray(a, "RGBA")
+
+
 def halves(img):
     return img.crop((0, 0, rig.HALF, rig.PAIR[1])), img.crop((rig.HALF, 0, rig.PAIR[0], rig.PAIR[1]))
 
@@ -278,33 +328,15 @@ def cmd_blink(a):
         print("blink", a.body, d, "eye px left:", int(eye_mask(img.convert("RGB"), body).sum()), flush=True)
 
 
-def blink_frames(name, body, idle_cells, tone):
-    """Idle frames with the eyes-closed patch, moved with the head of each frame."""
-    src = fdir(name) / "blink_{}.png"
-    out = {}
-    for d in BLINK_DIRS:
-        if not (fdir(name) / f"blink_{d}.png").exists():
-            continue
-        if None in idle_cells[d]:
-            continue
-        if Path(str(src).format(d)).stat().st_mtime < (fdir(name) / f"idle_{d}_0.png").stat().st_mtime:
-            print(f"  blink {d} is older than idle_{d}_0: run bodies.py blink {name}")
-        half = Image.open(str(src).format(d)).convert("RGB")
-        guide = halves(Image.open(ROOT / "out" / "bodies" / name / "guides" / f"idle_{d}_0.png"))[0]
-        patch = match_tone(snap_feet(clean_alpha(to_art_cell(half, clear_pockets(half, main_figure(half), body, guide)), min_px=6)), tone[d], body)
-        m = np.asarray(Image.open(str(src).format(f"{d}_mask")).convert("L").resize((rig.HALF // rig.GRID, rig.PAIR[1] // rig.GRID), Image.BOX)) > 40
-        full = np.zeros((rig.CELL, rig.CELL), bool)
-        ox, oy = rig.CELL_ORIGIN
-        full[oy:min(rig.CELL, oy + m.shape[0]), ox:ox + m.shape[1]] = m[:rig.CELL - oy]
-        tops = [cell_metrics(c)["top"] for c in idle_cells[d]]
-        frames = []
-        for c, top in zip(idle_cells[d], tops):
-            a, p = np.asarray(c).copy(), np.asarray(patch)
-            dy = top - tops[0]  # the head rises and falls with the breath
-            a[np.roll(full, dy, axis=0)] = np.roll(p, dy, axis=0)[np.roll(full, dy, axis=0)]
-            frames.append(Image.fromarray(a, "RGBA"))
-        out[d] = frames
-    return out
+def closed_eyes(name, body, d, tone):
+    """Eye sprite of the eyes-closed inpaint of a direction (cmd_blink)."""
+    src = fdir(name) / f"blink_{d}.png"
+    if src.stat().st_mtime < (fdir(name) / f"idle_{d}_0.png").stat().st_mtime:
+        print(f"  blink {d} is older than idle_{d}_0: run bodies.py blink {name}")
+    half = Image.open(src).convert("RGB")
+    guide = halves(Image.open(ROOT / "out" / "bodies" / name / "guides" / f"idle_{d}_0.png"))[0]
+    cell = snap_feet(clean_alpha(to_art_cell(half, clear_pockets(half, main_figure(half), body, guide)), min_px=6))
+    return split_eyes(match_tone(cell, tone, body), body, d)[1]
 
 
 def cmd_check(a):
@@ -379,16 +411,27 @@ def cmd_extract(a):
     for d in rig.DIRS:  # every frame votes, so one bad pair cannot shift its whole direction
         refs = [tones(c, body) for s in states for c in drawn[s, d][0] if c]
         tone[d] = {k: np.median([r[k] for r in refs if k in r], axis=0) for r in refs for k in r}
-    out_states, anchors, qc, idle_cells = {}, {}, {}, {}
+    out_states, anchors, qc = {}, {}, {}
+    eyes = Image.new("RGBA", (2 * EYES_W, len(BLINK_DIRS) * EYES_H))
+    eye_at = {}
     for si, state in enumerate(states):
         n = len(rig.POSES[state])
-        dirs_rects, anchors[state] = [], {}
+        dirs_rects, anchors[state], eye_at[state] = [], {}, {}
         for di, d in enumerate(rig.DIRS):
             cells, cut = drawn[state, d]
             qc[f"{state}_{d}"] = frame_qc(cells, meta["joints"][state][d], state, cut)  # before tones hide drift
             cells = [match_tone(c, tone[d], body) if c else c for c in cells]
-            if state == "idle":
-                idle_cells[d] = cells
+            if d in BLINK_DIRS:
+                parts = [split_eyes(c, body, d) if c else (None, None, [0, 0], 0) for c in cells]
+                cells = [p[0] for p in parts]
+                eye_at[state][d] = [p[2] for p in parts]
+                for f, p in zip(qc[f"{state}_{d}"], parts):
+                    if p[3]:
+                        f["issues"].append(f"{p[3]} eye px left")
+                if state == "idle":
+                    row = BLINK_DIRS.index(d) * EYES_H
+                    eyes.paste(vivid_eyes(parts[0][1]), (0, row))
+                    eyes.paste(closed_eyes(name, body, d, tone[d]), (EYES_W, row))
             rects = []
             for i, c in enumerate(cells):
                 x, y = i * rig.CELL, (si * len(rig.DIRS) + di) * rig.CELL
@@ -398,21 +441,10 @@ def cmd_extract(a):
             dirs_rects.append(rects)
             anchors[state][d] = meta["joints"][state][d]
         out_states[state] = {**STATES[state], "dirs": dirs_rects}
-    blinks = blink_frames(name, body, idle_cells, tone)
-    if blinks:  # extra rows under the sheet; directions without a face show plain idle
-        tall = Image.new("RGBA", (sheet.width, sheet.height + len(blinks) * rig.CELL))
-        tall.paste(sheet)
-        dirs = [list(r) for r in out_states["idle"]["dirs"]]
-        for row, (d, frames) in enumerate(blinks.items()):
-            y = sheet.height + row * rig.CELL
-            for i, c in enumerate(frames):
-                tall.paste(c, (i * rig.CELL, y))
-            dirs[rig.DIRS.index(d)] = [{"x": i * rig.CELL, "y": y, "w": rig.CELL, "h": rig.CELL} for i in range(len(frames))]
-        sheet = tall
-        out_states["blink"] = {**STATES["idle"], "dirs": dirs}
     art = ART / name
     art.mkdir(parents=True, exist_ok=True)
     sheet.save(art / "sheet.png")
+    eyes.save(art / "eyes.png")
     walk = STATES["walk"]
     # one walk cycle (6 frames) covers two strides: world speed in tiles/s = 2 strides per cycle
     cycle_s = len(rig.POSES["walk"]) / walk["fps"]
@@ -420,6 +452,7 @@ def cmd_extract(a):
         "body": name, "frameW": rig.CELL, "frameH": rig.CELL, "feetY": rig.CELL_FEET[1], "ppu": PPU,
         "height": body.height, "walkSpeed": round(2 * meta["stride_px"] / PPU / cycle_s, 3),
         "states": out_states, "anchors": anchors,
+        "eyes": {"w": EYES_W, "h": EYES_H, "dirs": list(BLINK_DIRS), "at": eye_at},  # rows of eyes.png; columns open, closed
     })
     save_json(ROOT / "out" / "bodies" / name / "qc.json", qc)
     bad = {k: v for k, v in qc.items() if any(f["issues"] for f in v)}
@@ -476,19 +509,24 @@ def cmd_qc(a):
 <script>
 const meta = {json.dumps({k: v for k, v in meta.items() if k != 'anchors'})};
 const img = new Image(); img.src = '../../../../art/bodies/{name}/sheet.png?' + Date.now();
-img.onload = () => {{
+const eyes = new Image(); eyes.src = '../../../../art/bodies/{name}/eyes.png?' + Date.now();
+const e = meta.eyes;
+eyes.onload = () => img.decode().then(() => {{
   const cs = [...document.querySelectorAll('canvas')];
   const t0 = performance.now();
   (function tick(now) {{
     for (const c of cs) {{
       const st = meta.states[c.dataset.s], fr = st.dirs[c.dataset.d];
-      const r = fr[Math.floor((now - t0) / 1000 * st.fps) % fr.length];
+      const i = Math.floor(Math.max(now - t0, 0) / 1000 * st.fps) % fr.length, r = fr[i];  // the frame clock can start before t0
       const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.clearRect(0, 0, c.width, c.height);
+      g.globalCompositeOperation = 'source-over';
       g.drawImage(img, r.x, r.y, r.w, r.h, 0, 0, c.width, c.height);
+      const at = e.at[c.dataset.s][e.dirs[c.dataset.d]];
+      if (at) {{ g.globalCompositeOperation = 'source-atop'; g.drawImage(eyes, 0, c.dataset.d * e.h, e.w, e.h, at[i][0], at[i][1], e.w, e.h); }}
     }}
     requestAnimationFrame(tick);
   }})(t0);
-}};
+}});
 </script>"""
     p = ROOT / "out" / "bodies" / name / "qc.html"
     p.write_text(html, encoding="utf-8")

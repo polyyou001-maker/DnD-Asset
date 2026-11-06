@@ -76,10 +76,15 @@ idle variants (smile, look around).
    (48 colors fitted to figure pixels) → 160 cell, feet snapped to the line (up to 3 px). Output `art/bodies/<body>/sheet.png` + `sheet.json` in the prototype Actor
    format (`frameW, frameH, feetY, ppu, states{fps, loop, dirs[5][frames]}`) plus
    `anchors[state][dir][frame] = {head, hand_left, hand_right, foot_left, foot_right}` from the rig.
-4. Blink: per drawn direction with a visible face (S, SW, W), an eyes-closed patch is inpainted
-   on the idle frame 0 and moved per frame with the drawn head top. The result is a `blink` state
-   with the same frames as `idle`; the Actor shows it for 0.14 s every 2–5 s. NW and N blink
-   rects are plain idle.
+4. Eyes (S, SW, W; NW and N show none): extraction cuts brows and eyes off every frame, inside a
+   zone taken from the drawn skull, and fills them with skin. `sheet.png` is therefore faceless;
+   the mouth stays on the body. `art/bodies/<body>/eyes.png` holds one sprite per direction, cut
+   from idle frame 0 (column 0) and from the eyes-closed inpaint of that frame (column 1).
+   `sheet.json` `eyes.at[state][dir][frame]` places a sprite on the drawn skull of that frame
+   (left edge on W, centre on S and SW; top), so the eyes follow the head and never redraw.
+5. At load `prototype/src/bodySheet.js` dyes the eyes with `look.eyes` (the 6 `EYE_COLORS`, through
+   `dye.js`), draws them onto a copy of the sheet clipped to the outline, and adds the `blink`
+   state: idle frames with closed eyes. The Actor shows it for 0.14 s every 2–5 s.
 
 ## QC
 
@@ -89,7 +94,8 @@ Automatic (per frame, report in `out/bodies/<body>/qc.json`):
 - the support foot on the feet line (±1 px) in contact frames;
 - head height within ±3 px of frame 0 of that state and direction (±6 px on walk, for the bob);
 - median skin color within ΔE 6 of the idle frame 0 of that direction;
-- no stray islands (connected components) beyond the figure.
+- no stray islands (connected components) beyond the figure;
+- no blue eye pixels left in the face zone of the faceless frames.
 
 Human review: GIF per direction at 1× and 3× in `out/bodies/<body>/qc.html` and live in the
 animation lab ("Body QC"): face changes, limbs swapping sides, flicker. A failing frame is

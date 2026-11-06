@@ -9,7 +9,8 @@ import { findPath, tileKey } from './grid.js';
 import { floatingText } from './labels.js';
 import { createPlaceholderSheet, PALETTES } from './placeholderSheet.js';
 import { loadSet, compose } from '../../src/paperdoll2/composer.js';
-import { CLASSES } from '../../src/character/rules.js';
+import { CLASSES, EYE_COLORS } from '../../src/character/rules.js';
+import { composeBody } from './bodySheet.js';
 
 const SET_URL = new URL('../art/paperdoll2/A/', location.href).href;
 const BODIES_URL = new URL('../art/bodies/', location.href).href;
@@ -84,7 +85,7 @@ class Lab {
   // ---------- hero ----------
   rebuildHero() {
     const old = this.hero;
-    const sheet = this.body ? this.bodySheets[this.body] : compose(this.set, this.look);
+    const sheet = this.body ? this.bodySheet() : compose(this.set, this.look);
     this.hero = new Actor({ name: 'Hero', sheet, stats: { maxHp: 30 }, team: 'player', world: this.world });
     if (sheet.walkSpeed) this.hero.moveSpeed = sheet.walkSpeed; // drawn stride -> no foot sliding
     if (old) {
@@ -105,15 +106,20 @@ class Lab {
     this.#syncButtons();
   }
 
-  // Frame-by-frame bodies (pipeline/bodies.py): sheet.json is already in the Actor sheet format.
+  // One composed sheet per eye color; the Actors share them.
+  bodySheet() {
+    const b = this.bodySheets[this.body];
+    return (b.composed[this.look.eyes] ??= composeBody(b.meta, b.image, b.eyes, this.look.eyes));
+  }
+
+  // Frame-by-frame bodies (pipeline/bodies.py): sheet.json is the Actor sheet format minus the eyes.
   async setBody(name) {
     if (name && !this.bodySheets[name]) {
       try {
         const meta = await (await fetch(`${BODIES_URL}${name}/sheet.json`)).json();
-        const image = new Image();
-        image.src = `${BODIES_URL}${name}/sheet.png`;
-        await image.decode();
-        this.bodySheets[name] = { ...meta, image };
+        const [image, eyes] = ['sheet', 'eyes'].map((f) => Object.assign(new Image(), { src: `${BODIES_URL}${name}/${f}.png` }));
+        await Promise.all([image.decode(), eyes.decode()]);
+        this.bodySheets[name] = { meta, image, eyes, composed: {} };
       } catch (e) {
         console.warn(`body ${name} not built yet`, e);
         return;
@@ -341,6 +347,7 @@ class Lab {
       return b;
     };
     this.bodyBtns = BODIES.map(([id, name]) => [btn('bodies', name, () => this.setBody(id)), id]);
+    this.eyeBtns = Object.entries(EYE_COLORS).map(([name, hex]) => [btn('eyes', name, () => this.setLook({ eyes: hex })), hex]);
     this.classBtns = Object.entries(CLASSES).map(([id, c]) => [btn('classes', c.name, () => this.setLook({ ...c.kit })), c.kit.outfit]);
     this.weaponBtns = WEAPONS.map(([id, name], i) => [btn('weapons', `${name} ${i + 1}`, () => this.setLook({ weapon: id })), id]);
     this.shieldBtns = SHIELDS.map(([id, name]) => [btn('shields', name, () => this.setLook({ shield: id })), id]);
@@ -361,6 +368,7 @@ class Lab {
   #syncButtons() {
     if (!this.classBtns) return;
     for (const [b, id] of this.bodyBtns) b.classList.toggle('on', id === this.body);
+    for (const [b, hex] of this.eyeBtns) b.classList.toggle('on', hex === this.look.eyes);
     for (const [b, outfit] of this.classBtns) b.classList.toggle('on', outfit === this.look.outfit);
     for (const [b, id] of this.weaponBtns) b.classList.toggle('on', id === (this.look.weapon ?? null));
     for (const [b, id] of this.shieldBtns) b.classList.toggle('on', id === (this.look.shield ?? null));

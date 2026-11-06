@@ -83,7 +83,7 @@ export function dyeLayer(img, part, look, manifest) {
     } else if (skin && Math.abs(h - ref[0]) < 12 && Math.abs(s - ref[1]) < 0.25 && l > ref[2] - 0.25) {
       out = hsl2rgb(skin[0] + (h - ref[0]), clamp01(s * (skin[1] / ref[1])), clamp01(l * (skin[2] / ref[2])));
     } else if (eyes && s > 0.3 && hueIn(h, dye.eyeBand)) {
-      out = hsl2rgb(eyes[0], clamp01(Math.max(s, eyes[1])), clamp01(l * (0.5 + eyes[2])));
+      out = hsl2rgb(eyes[0], eyes[1] < 0.3 ? eyes[1] : clamp01(Math.max(s, eyes[1])), clamp01(l * (0.5 + eyes[2]))); // grey stays grey
     } else if (c1 && s > 0.22 && hueIn(h, dye.cloth1Band)) {
       out = hsl2rgb(c1[0], clamp01(s * (0.4 + c1[1])), clamp01(l * (c1[2] / dye.cloth1L)));
     } else if (c2 && s > 0.45 && l > 0.42 && hueIn(h, dye.cloth2Band)) {
