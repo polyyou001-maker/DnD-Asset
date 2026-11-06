@@ -38,6 +38,8 @@ export class Actor {
     this.moveResolve = null;
     this.moveSpeed = 3.2; // tiles per second
     this.flash = 0;
+    this.blinkIn = 2 + Math.random() * 3; // seconds to the next blink (bodies with a blink state)
+    this.blinkLeft = 0;
 
     if (!sheet.texture) {
       sheet.texture = new THREE.CanvasTexture(sheet.image);
@@ -149,7 +151,7 @@ export class Actor {
 
     // animation frame
     this.stateTime += dt * animSpeed;
-    const anim = this.sheet.states[this.state];
+    const anim = this.sheet.states[this.pickBlink(dt * animSpeed) ? 'blink' : this.state];
     const { drawn, mirror } = spriteDirection(this.facing, cameraYaw);
     const frames = anim.dirs[drawn];
     let fi = Math.floor(this.stateTime * anim.fps);
@@ -179,6 +181,18 @@ export class Actor {
 
     for (const l of this.labels) l.update(dt);
     this.labels = this.labels.filter((l) => !l.done);
+  }
+
+  // Eyes close at random, off the idle loop; blink has the same frames as idle, so the breath keeps its phase.
+  pickBlink(dt) {
+    if (this.state !== 'idle' || !this.sheet.states.blink) return false;
+    this.blinkIn -= dt;
+    this.blinkLeft -= dt;
+    if (this.blinkIn <= 0) {
+      this.blinkIn = 2 + Math.random() * 3;
+      this.blinkLeft = 0.14;
+    }
+    return this.blinkLeft > 0;
   }
 
   addLabel(label) {

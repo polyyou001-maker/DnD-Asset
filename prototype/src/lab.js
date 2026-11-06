@@ -12,6 +12,8 @@ import { loadSet, compose } from '../../src/paperdoll2/composer.js';
 import { CLASSES } from '../../src/character/rules.js';
 
 const SET_URL = new URL('../art/paperdoll2/A/', location.href).href;
+const BODIES_URL = new URL('../art/bodies/', location.href).href;
+const BODIES = [[null, 'Paper doll'], ['human', 'Human'], ['elf', 'Elf'], ['dwarf', 'Dwarf'], ['halfling', 'Halfling']];
 const WEAPONS = [['longsword', 'Sword'], ['mace', 'Mace'], ['dagger', 'Dagger'], ['staff', 'Staff'], [null, 'Unarmed']];
 const SHIELDS = [[null, 'None'], ['shield_kite', 'Kite'], ['shield_round', 'Round']];
 const STATES = ['idle', 'walk', 'attack', 'block', 'hit', 'sit', 'dead'];
@@ -38,6 +40,8 @@ class Lab {
     this.busy = false;        // an attack/block/hit is playing
     this.pendingHit = null;   // { t, target, style } — fires at the attack's impact frame
     this.bolts = [];
+    this.body = null;         // null = paper-doll set A; else a frame-by-frame body (art/bodies/<name>)
+    this.bodySheets = {};
 
     this.renderer = new THREE.WebGLRenderer({ antialias: false });
     this.renderer.domElement.id = 'view';
@@ -80,14 +84,15 @@ class Lab {
   // ---------- hero ----------
   rebuildHero() {
     const old = this.hero;
-    const sheet = compose(this.set, this.look);
+    const sheet = this.body ? this.bodySheets[this.body] : compose(this.set, this.look);
     this.hero = new Actor({ name: 'Hero', sheet, stats: { maxHp: 30 }, team: 'player', world: this.world });
+    if (sheet.walkSpeed) this.hero.moveSpeed = sheet.walkSpeed; // drawn stride -> no foot sliding
     if (old) {
       old.stop(); // settles a pending walk (attackDummy awaits it)
       this.hero.placeAt(old.tx, old.tz);
       this.hero.facing = old.facing;
       this.scene.remove(old.root);
-      old.sheet.texture?.dispose();
+      if (!old.sheet.body) old.sheet.texture?.dispose(); // body sheets are cached and reused
       old.texture.dispose();
       old.material.dispose();
     } else {
@@ -98,6 +103,24 @@ class Lab {
     this.busy = false;
     this.pendingHit = null;
     this.#syncButtons();
+  }
+
+  // Frame-by-frame bodies (pipeline/bodies.py): sheet.json is already in the Actor sheet format.
+  async setBody(name) {
+    if (name && !this.bodySheets[name]) {
+      try {
+        const meta = await (await fetch(`${BODIES_URL}${name}/sheet.json`)).json();
+        const image = new Image();
+        image.src = `${BODIES_URL}${name}/sheet.png`;
+        await image.decode();
+        this.bodySheets[name] = { ...meta, image };
+      } catch (e) {
+        console.warn(`body ${name} not built yet`, e);
+        return;
+      }
+    }
+    this.body = name;
+    this.rebuildHero();
   }
 
   setLook(patch) {
@@ -128,6 +151,7 @@ class Lab {
   // ---------- actions ----------
   async play(state, target = null) {
     const h = this.hero;
+    if (!h.sheet.states[state]) return; // e.g. a body that only has idle + walk so far
     if (state === 'dead') { this.toggleDead(); return; }
     if (this.dead || this.busy) return;
     h.stop();
@@ -150,6 +174,7 @@ class Lab {
 
   toggleDead() {
     const h = this.hero;
+    if (!h.sheet.states.dead) return;
     h.stop();
     this.busy = false;
     this.pendingHit = null;
@@ -315,6 +340,7 @@ class Lab {
       document.getElementById(parent).append(b);
       return b;
     };
+    this.bodyBtns = BODIES.map(([id, name]) => [btn('bodies', name, () => this.setBody(id)), id]);
     this.classBtns = Object.entries(CLASSES).map(([id, c]) => [btn('classes', c.name, () => this.setLook({ ...c.kit })), c.kit.outfit]);
     this.weaponBtns = WEAPONS.map(([id, name], i) => [btn('weapons', `${name} ${i + 1}`, () => this.setLook({ weapon: id })), id]);
     this.shieldBtns = SHIELDS.map(([id, name]) => [btn('shields', name, () => this.setLook({ shield: id })), id]);
@@ -334,6 +360,7 @@ class Lab {
 
   #syncButtons() {
     if (!this.classBtns) return;
+    for (const [b, id] of this.bodyBtns) b.classList.toggle('on', id === this.body);
     for (const [b, outfit] of this.classBtns) b.classList.toggle('on', outfit === this.look.outfit);
     for (const [b, id] of this.weaponBtns) b.classList.toggle('on', id === (this.look.weapon ?? null));
     for (const [b, id] of this.shieldBtns) b.classList.toggle('on', id === (this.look.shield ?? null));
@@ -395,7 +422,7 @@ class Lab {
     this.readout.textContent =
       `state   ${h.state}  frame ${(anim.loop ? fi % n : Math.min(fi, n - 1)) + 1}/${n}\n` +
       `dir     ${DIR_NAMES[drawn]}${mirror ? ' (mirrored)' : ''}  facing ${Math.round(((h.facing * 180 / Math.PI) % 360 + 360) % 360)}°\n` +
-      `attack  ${h.sheet.attackStyle}  tile ${h.tx},${h.tz}`;
+      `${this.body ? `body    ${this.body}  speed ${h.moveSpeed} t/s` : `attack  ${h.sheet.attackStyle}`}  tile ${h.tx},${h.tz}`;
 
     this.renderer.render(this.scene, this.cam);
   }
