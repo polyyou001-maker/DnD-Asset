@@ -322,16 +322,22 @@ def render_depth(body, pose, direction, size=(HALF, PAIR[1]), feet_y=FEET_Y, ste
     return img.convert("RGB")
 
 
-def joints_2d(body, pose, direction):
-    """Named 2D anchors in cell coordinates (sprite px, y down, feet at CELL_FEET)."""
+def view_joints(body, pose, direction):
+    """Every skeleton joint in cell coordinates: [x, y, depth] (sprite px, y down, feet at CELL_FEET, +depth = nearer)."""
     j = skeleton(body, pose)
     shift = floor_shift(body, j, pose, direction)
     out = {}
-    for name, key in (("head", "head"), ("hand_left", "hand_L"), ("hand_right", "hand_R"),
-                      ("foot_left", "ankle_L"), ("foot_right", "ankle_R"), ("pelvis", "pelvis")):
-        v = (roll_view(to_view(np.asarray(j[key]), direction), pose.roll) + shift) * SCALE / GRID
-        out[name] = [round(CELL_FEET[0] + float(v[0]), 1), round(CELL_FEET[1] - float(v[1]), 1), round(float(v[2]), 1)]
+    for key, p in j.items():
+        v = (roll_view(to_view(np.asarray(p), direction), pose.roll) + shift) * SCALE / GRID
+        out[key] = [round(CELL_FEET[0] + float(v[0]), 1), round(CELL_FEET[1] - float(v[1]), 1), round(float(v[2]), 1)]
     return out
+
+
+def joints_2d(body, pose, direction):
+    """Named 2D anchors in cell coordinates (sprite px, y down, feet at CELL_FEET)."""
+    v = view_joints(body, pose, direction)
+    return {name: v[key] for name, key in (("head", "head"), ("hand_left", "hand_L"), ("hand_right", "hand_R"),
+                                           ("foot_left", "ankle_L"), ("foot_right", "ankle_R"), ("pelvis", "pelvis"))}
 
 
 def pairs(n):

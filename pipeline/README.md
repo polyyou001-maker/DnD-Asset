@@ -131,3 +131,16 @@ python sheet.py contact A              # out/v2/A/contact.html for human review
 
 Parts, items and prompts live in `sets/A.json`. Output art goes to `../art/paperdoll2/A/`,
 which `../creator/` and `../prototype/` load.
+
+## v3: frame-by-frame bodies (`rig.py`, `bodies.py`)
+
+See `../docs/specs/body-animation.md`. The webui runs out of VRAM every few hours on long runs,
+so use `run_bodies.sh`, which restarts it and resumes:
+
+```
+python rig.py guides elf run attack_slash hit dead  # depth guides for the states
+bash run_bodies.sh gen elf run attack_slash hit dead # generate (finished frames skipped), then QC
+bash run_bodies.sh redo elf redo.txt 21              # redo "state dir pair" lines with seed 21, then QC
+python bodies.py extract elf                         # sheet + eyes to ../art/bodies/elf/
+python bodies.py qc elf                              # out/bodies/elf/qc.html for human review
+```

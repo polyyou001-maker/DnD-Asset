@@ -11,6 +11,7 @@ import { createPlaceholderSheet, PALETTES } from './placeholderSheet.js';
 import { loadSet, compose, attackStyle } from '../../src/paperdoll2/composer.js';
 import { CLASSES, EYE_COLORS } from '../../src/character/rules.js';
 import { composeBody } from './bodySheet.js';
+import { dyeLayer } from '../../src/paperdoll2/dye.js';
 
 const SET_URL = new URL('../art/paperdoll2/A/', location.href).href;
 const BODIES_URL = new URL('../art/bodies/', location.href).href;
@@ -106,12 +107,17 @@ class Lab {
     this.#syncButtons();
   }
 
-  // One composed sheet per eye color; the Actors share them.
+  // One composed sheet per look; the Actors share them.
   bodySheet() {
     const b = this.bodySheets[this.body];
     const armed = attackStyle(this.set, this.look);
     const style = armed === 'punch' ? 'stab' : armed; // bare hands use the stab frames (spec)
-    return (b.composed[`${this.look.eyes} ${style}`] ??= composeBody(b.meta, b.image, b.eyes, this.look.eyes, style));
+    const { eyes, outfit, hair, hairColor, cloth1, cloth2 } = this.look;
+    const worn = [outfit, hair].filter((id) => b.layers[id]); // clothes under hair
+    const layers = worn.map((id) => dyeLayer(b.layers[id].image, { id, slot: b.layers[id].slot === 'hair' ? 'hair' : 'body' },
+      this.look, this.set.manifest));
+    return (b.composed[[eyes, style, ...worn, hairColor, cloth1, cloth2].join(' ')] ??=
+      composeBody(b.meta, b.image, b.eyes, eyes, style, layers));
   }
 
   // Frame-by-frame bodies (pipeline/bodies.py): sheet.json is the Actor sheet format minus the eyes.
@@ -121,7 +127,15 @@ class Lab {
         const meta = await (await fetch(`${BODIES_URL}${name}/sheet.json`)).json();
         const [image, eyes] = ['sheet', 'eyes'].map((f) => Object.assign(new Image(), { src: `${BODIES_URL}${name}/${f}.png` }));
         await Promise.all([image.decode(), eyes.decode()]);
-        this.bodySheets[name] = { meta, image, eyes, composed: {} };
+        const layers = {}; // hair and clothes made for this body so far (pipeline/layers.py)
+        await Promise.all([this.look.outfit, this.look.hair].map(async (id) => {
+          const res = await fetch(`${BODIES_URL}${name}/layers/${id}/layer.json`);
+          if (!res.ok) return;
+          const image = Object.assign(new Image(), { src: `${BODIES_URL}${name}/layers/${id}/sheet.png` });
+          await image.decode();
+          layers[id] = { ...(await res.json()), image };
+        }));
+        this.bodySheets[name] = { meta, image, eyes, layers, composed: {} };
       } catch (e) {
         console.warn(`body ${name} not built yet`, e);
         return;
