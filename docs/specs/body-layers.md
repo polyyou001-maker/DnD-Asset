@@ -129,6 +129,15 @@ Cost: 10 images for both items (+4 to redo SW and W hair), about 1 hour; placeme
   Still bare: a forearm reaching far forward or up (W run, NW slash) and the bare hands of
   stab S; hair still covers a hand raised in front of the face.
 
+- **Near arm in side views (2026-11-10):** the bare forearms were the near arm in W (and SW/NW):
+  in both key frames it hangs over the torso, the torso's wide side-view radius won those
+  pixels, and the arm got no piece of its own. Now a limb nearer than the torso takes the pixels
+  inside its own radius, and the torso keeps them too (no hole when the arm swings away). Forearm
+  coverage (outfit share of the body inside the rig's forearm, all 370 per species): median
+  0.89 → 0.94, frames under 0.3 from 9 to 2 over the four species; torso coverage unchanged.
+  Still bare: the stab S hands (forearm points at the camera, 1–2 px long in the rig) and an arm
+  raised behind the head in NW/N.
+
 ## Elf, Dwarf, Halfling (2026-11-09)
 
 `hair_short` and `outfit_fighter` (both key frames) on the three other species: 45 images in

@@ -130,17 +130,22 @@ def bone_pieces(layer, ref_j, d, body):
     k = rig.SCALE / rig.GRID
     t = math.radians(rig.YAW[d])
     torso_r = math.hypot((body.shoulders / 2 - 1.5) * math.cos(t), 7.0 * body.width * math.sin(t)) * k
-    cost = []
+    cost, front = [], []
+    depth = lambda name: (ref_j[BONES[name][0]][2] + ref_j[BONES[name][1]][2]) / 2
     for name, (p, q) in BONES.items():
         p0, q0 = np.array(ref_j[p][:2]), np.array(ref_j[q][:2])
         v = q0 - p0
         u = np.clip(((pts - p0) @ v) / max(v @ v, 1e-6), 0, 1)
         dist = np.linalg.norm(pts - (p0 + u[:, None] * v), axis=1)
-        cost.append(dist - (torso_r if name == "torso" else 4.0 * body.limb * k))
-    owner = np.argmin(cost, axis=0)
+        r = torso_r if name == "torso" else 4.0 * body.limb * k
+        cost.append(dist - r)
+        front.append(dist - r - 1000 * (dist < r) if name != "torso" and depth(name) > depth("torso") else cost[-1])
+    # A limb in front of the torso (the near arm in a side view) is what is drawn there: it takes those
+    # pixels with it, and the torso keeps them too, so no hole opens when the limb swings away.
+    owner, under = np.argmin(front, axis=0), np.argmin(cost, axis=0)
     pieces = {}
     for i, name in enumerate(BONES):
-        sel = owner == i
+        sel = (owner == i) | ((under == i) & (name == "torso"))
         if sel.any():
             piece = np.zeros_like(a)
             piece[ys[sel], xs[sel]] = a[ys[sel], xs[sel]]
