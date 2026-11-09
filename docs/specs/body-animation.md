@@ -119,6 +119,9 @@ Automatic (per frame, report in `out/bodies/<body>/qc.json`):
 - `dead`: not curled up (≥ 85 % of the guide's length), clothes and outline present, and the
   figure's area at most 1.3× the guide's (the model fills the empty wide frame with a big
   muscular body, worst on the dwarf; the fall prompt also negates "muscular, abs, giant");
+  the head (fattest part of the guide, 0.6 of its radius) at least half skin (the model pulls
+  the grey shirt over a fallen head: bad 0.00–0.23, good ≥ 0.80). A giant pale enough to read
+  as background, or a second head on the chest, still passes: look at the dead strip;
 - the support foot on the feet line (±1 px, above it by the pose's bob) in contact frames;
 - head height within ±3 px of where the rig puts it relative to frame 0 of that state and direction
   (±6 px on moving states);

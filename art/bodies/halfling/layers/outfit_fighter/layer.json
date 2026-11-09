@@ -1,0 +1,9 @@
+{
+  "item": "outfit_fighter",
+  "slot": "outfit",
+  "dye": [
+    "cloth1",
+    "cloth2"
+  ],
+  "method": "cutout"
+}

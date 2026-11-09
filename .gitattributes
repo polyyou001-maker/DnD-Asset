@@ -1,0 +1,2 @@
+# bash reads CRLF as part of each command: keep shell scripts LF on Windows checkouts
+*.sh text eol=lf

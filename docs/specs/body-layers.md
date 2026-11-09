@@ -129,6 +129,23 @@ Cost: 10 images for both items (+4 to redo SW and W hair), about 1 hour; placeme
   Still bare: a forearm reaching far forward or up (W run, NW slash) and the bare hands of
   stab S; hair still covers a hand raised in front of the face.
 
+## Elf, Dwarf, Halfling (2026-11-09)
+
+`hair_short` and `outfit_fighter` (both key frames) on the three other species: 45 images in
+about 3 h, plus redos. Picked by eye from the raw images; redone with new seeds:
+- outfit dwarf W and halfling W (bare legs, almost no armor), halfling NW (skin strip on the back);
+- hair elf S, SW, W: elf W came out cream, too close to the pale skin for the `|dressed − base|`
+  cut, which kept almost none of it. A hair whose raw image is not clearly whiter than the skin
+  needs another seed.
+
+The extraction also showed broken body frames from phase 2: dead frame 1 (the 52° fall) of
+dwarf S/SW/NW/N and elf N had the shirt drawn over the head, elf NW 1–2 a second head. They
+were regenerated, and the body QC gained a head-is-skin check (`docs/specs/body-animation.md`).
+
+Known: the ears are partly cut into the hair piece (elf N, halfling) because the inpaint redraws
+them. They land where the body's own ears are, so they only show if the head turns away from
+the rig.
+
 ## Open questions
 
 1. How long hair and twintails split into back and front pieces.

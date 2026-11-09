@@ -300,6 +300,12 @@ def qc_pair(img, body, direction, guide, state):
                 issues.append(f"{side}: curled up, {xs.max() - xs.min()} wide vs {span.max() - span.min()}")
             if fig.sum() > 1.3 * drawn.sum():  # a giant drawn over the small lying body (good ones: 0.94-1.18)
                 issues.append(f"{side}: too big, {fig.sum() / drawn.sum():.1f}x the guide")
+            dist = cv2.distanceTransform(drawn.astype(np.uint8), cv2.DIST_L2, 5)  # the head is the fattest part
+            hy, hx = np.unravel_index(int(dist.argmax()), dist.shape)
+            yy, xx = np.mgrid[:fig.shape[0], :fig.shape[1]]
+            head = np.asarray(half).astype(int)[fig & ((xx - hx) ** 2 + (yy - hy) ** 2 < (0.6 * dist.max()) ** 2)]
+            if len(head) and ((head[:, 0] > 200) & (head[:, 0] > head[:, 2] + 25) & (head[:, 1] > 150)).mean() < 0.5:
+                issues.append(f"{side}: head not skin")  # the shirt pulled over the head (bad 0.00-0.23, good 0.80+)
             rgb = np.asarray(half).astype(int)[fig]
             tone = rgb.mean(axis=1)
             if (((abs(rgb[:, 0] - rgb[:, 2]) < 25) & (tone > 110) & (tone < 215)).mean() < 0.03) or (tone < 70).mean() < 0.015:
