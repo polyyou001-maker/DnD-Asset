@@ -8,7 +8,7 @@ import { CameraRig } from './cameraRig.js';
 import { findPath, tileKey } from './grid.js';
 import { floatingText } from './labels.js';
 import { createPlaceholderSheet, PALETTES } from './placeholderSheet.js';
-import { loadSet, compose } from '../../src/paperdoll2/composer.js';
+import { loadSet, compose, attackStyle } from '../../src/paperdoll2/composer.js';
 import { CLASSES, EYE_COLORS } from '../../src/character/rules.js';
 import { composeBody } from './bodySheet.js';
 
@@ -17,7 +17,7 @@ const BODIES_URL = new URL('../art/bodies/', location.href).href;
 const BODIES = [[null, 'Paper doll'], ['human', 'Human'], ['elf', 'Elf'], ['dwarf', 'Dwarf'], ['halfling', 'Halfling']];
 const WEAPONS = [['longsword', 'Sword'], ['mace', 'Mace'], ['dagger', 'Dagger'], ['staff', 'Staff'], [null, 'Unarmed']];
 const SHIELDS = [[null, 'None'], ['shield_kite', 'Kite'], ['shield_round', 'Round']];
-const STATES = ['idle', 'walk', 'attack', 'block', 'hit', 'sit', 'dead'];
+const STATES = ['idle', 'walk', 'run', 'attack', 'block', 'hit', 'sit', 'dead'];
 const DAMAGE = { slash: [8, 3], smash: [6, 3], stab: [4, 3], cast: [10, 0], punch: [1, 2] }; // [die, bonus]
 const DIR_NAMES = ['S', 'SW', 'W', 'NW', 'N'];
 const DUMMY_HP = 20;
@@ -109,7 +109,9 @@ class Lab {
   // One composed sheet per eye color; the Actors share them.
   bodySheet() {
     const b = this.bodySheets[this.body];
-    return (b.composed[this.look.eyes] ??= composeBody(b.meta, b.image, b.eyes, this.look.eyes));
+    const armed = attackStyle(this.set, this.look);
+    const style = armed === 'punch' ? 'stab' : armed; // bare hands use the stab frames (spec)
+    return (b.composed[`${this.look.eyes} ${style}`] ??= composeBody(b.meta, b.image, b.eyes, this.look.eyes, style));
   }
 
   // Frame-by-frame bodies (pipeline/bodies.py): sheet.json is the Actor sheet format minus the eyes.
@@ -161,7 +163,7 @@ class Lab {
     if (state === 'dead') { this.toggleDead(); return; }
     if (this.dead || this.busy) return;
     h.stop();
-    if (state === 'sit' || state === 'idle' || state === 'walk') {
+    if (state === 'sit' || state === 'idle' || state === 'walk' || state === 'run') {
       h.setState(state === 'sit' && h.state === 'sit' ? 'idle' : state);
       return;
     }

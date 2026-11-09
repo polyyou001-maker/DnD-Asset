@@ -59,8 +59,30 @@ swing opposite to the legs at 0.8× the thigh angle, elbows bent 15° + the swin
 The pelvis height is solved per frame so the lowest foot touches the ground. The stride the
 rig produces (distance the stance foot travels in one cycle) sets the walk speed in the game.
 
-Phase 2 (after phase 1 QC): run 6, attack 4 × 4 styles, hit 2, dead 3. Later: cast, sit, jump,
-idle variants (smile, look around).
+### Phase 2
+
+Built on Human first; the other species follow once the user has approved the poses.
+
+| state | frames | fps | loop | motion |
+|---|---|---|---|---|
+| `run` | 6 | 14 | yes | long stride, lean 9°, arms bent 70°; both feet leave the ground on passing (2 px) |
+| `attack_slash` | 4 | 12 | no | arm high, swing, impact (frame 2), recover |
+| `attack_smash` | 4 | 9 | no | crouch, arm overhead, impact low (frame 2), recover |
+| `attack_stab` | 4 | 14 | no | pull back, load, lunge (frame 2), recover |
+| `attack_cast` | 4 | 8 | no | gather, raise, both hands forward (frame 2), settle |
+| `hit` | 2 | 8 | no | recoil back 12°, recover; shows the closed-eyes sprite |
+| `dead` | 3 | 6 | no | knees buckle, falls 52°, lies flat |
+
+- Attacks strike with the right arm, the weapon hand. Style comes from the weapon, as in the
+  animation lab. A bare hand uses `attack_stab` (the lab's `punch` is not drawn).
+- `hitFrame` in `sheet.json` is the frame where the blow lands.
+- `dead` falls in the picture plane, head to the right, in every drawn direction: a body falling
+  toward or away from the camera would be foreshortened to almost nothing. Mirrored directions fall
+  to the left. Its frames are one figure per image (a fallen Human is wider than half an image) and
+  are drawn with closed eyes, so they have no eye layer.
+- `runSpeed` in `sheet.json` is the run's world speed.
+
+Later: cast, sit, jump, idle variants (smile, look around).
 
 ## Generation
 
@@ -72,12 +94,14 @@ idle variants (smile, look around).
    (1216×1216, one depth guide per half). The first pair's first frame of each direction is
    the identity reference (`reference_only`) for that direction's other pairs; same seed.
    Depth ControlNet (`noob-depth`) carries the pose.
+   A half is only ±38 sprite px from the feet: a frame reaching past it is rendered shifted by whole
+   sprite px (`rig.fit_shift`, per body, frame and direction), and extraction shifts it back.
 3. Extraction: each half → largest figure, enclosed white removed → median of each 8 px block
    (48 colors fitted to figure pixels) → 160 cell, feet snapped to the line (up to 3 px). Output `art/bodies/<body>/sheet.png` + `sheet.json` in the prototype Actor
    format (`frameW, frameH, feetY, ppu, states{fps, loop, dirs[5][frames]}`) plus
    `anchors[state][dir][frame] = {head, hand_left, hand_right, foot_left, foot_right}` from the rig.
 4. Eyes (S, SW, W; NW and N show none): extraction cuts brows and eyes off every frame, inside a
-   zone taken from the drawn skull, and fills them with skin. `sheet.png` is therefore faceless;
+   zone taken from the drawn skull (found around the rig's head, so a raised hand is not skull), and fills them with skin. `sheet.png` is therefore faceless;
    the mouth stays on the body. `art/bodies/<body>/eyes.png` holds one sprite per direction, cut
    from idle frame 0 (column 0) and from the eyes-closed inpaint of that frame (column 1).
    `sheet.json` `eyes.at[state][dir][frame]` places a sprite on the drawn skull of that frame
@@ -90,9 +114,14 @@ idle variants (smile, look around).
 
 Automatic (per frame, report in `out/bodies/<body>/qc.json`):
 - one figure; light background; not cut by the half's side edge; shirt present (grey share of
-  the torso box ≥ 8 %); `generate` retries on these and keeps the attempt with the fewest issues;
-- the support foot on the feet line (±1 px) in contact frames;
-- head height within ±3 px of frame 0 of that state and direction (±6 px on walk, for the bob);
+  the torso box ≥ 8 %); eyes inside the face zone of the rig's head (else the model turned the head);
+  `generate` retries on these and keeps the attempt with the fewest issues;
+- `dead`: not curled up (≥ 85 % of the guide's length), clothes and outline present, and the
+  figure's area at most 1.3× the guide's (the model fills the empty wide frame with a big
+  muscular body, worst on the dwarf; the fall prompt also negates "muscular, abs, giant");
+- the support foot on the feet line (±1 px, above it by the pose's bob) in contact frames;
+- head height within ±3 px of where the rig puts it relative to frame 0 of that state and direction
+  (±6 px on moving states);
 - median skin color within ΔE 6 of the idle frame 0 of that direction;
 - no stray islands (connected components) beyond the figure;
 - no blue eye pixels left in the face zone of the faceless frames.

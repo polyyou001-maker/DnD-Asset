@@ -2,7 +2,7 @@
 
 Usage:
   python rig.py preview <body>          -> out/bodies/<body>/rig_preview.png (all poses, 5 dirs)
-  python rig.py guides  <body>          -> out/bodies/<body>/guides/<state>_<dir>_<pair>.png + joints.json
+  python rig.py guides  <body> [states] -> out/bodies/<body>/guides/<state>_<dir>_<pair>.png + joints.json
 
 Units are game pixels: feet on y = 0, +y up, +z = the body's forward, +x = the body's left.
 Guides are rendered at 10 generation px per game px, two frames per 1216×1216 image
@@ -71,6 +71,7 @@ class Pose:
     lean: float = 0            # upper body forward
     breathe: float = 0         # 0..1: chest and shoulders rise 1 px
     bob: float = 0             # extra pelvis offset (px) on top of the solved ground contact
+    roll: float = 0            # falls over in the picture plane, head toward +x (same in every direction)
 
 
 # Walk (spec table): left leg; the right leg is the same 3 frames later; arms opposite.
@@ -86,11 +87,61 @@ def walk_pose(i):
                 abduct=7, lean=3)
 
 
+# Run (spec table): longer stride, knees high, arms bent; both feet leave the ground on passing.
+RUN_THIGH = [38, 18, -10, -34, -20, 14]
+RUN_KNEE = [8, 32, 14, 24, 70, 85]
+RUN_BOB = [0, 0, 2, 0, 0, 2]
+
+
+def run_pose(i):
+    j = (i + 3) % 6
+    tl, tr = RUN_THIGH[i], RUN_THIGH[j]
+    return Pose(thigh=(tl, tr), knee=(RUN_KNEE[i], RUN_KNEE[j]), shoulder=(-0.9 * tl, -0.9 * tr),
+                elbow=(70, 70), abduct=8, lean=9, bob=RUN_BOB[i])
+
+
 IDLE_BREATH = [0, 0.5, 1, 0.5]
 POSES = {
     "idle": [Pose(breathe=b, shoulder=(2 * b, 2 * b), elbow=(10 + 2 * b, 10 + 2 * b)) for b in IDLE_BREATH],
     "walk": [walk_pose(i) for i in range(6)],
+    "run": [run_pose(i) for i in range(6)],
+    # Attacks strike with the right arm (index 1), the weapon hand: wind-up, swing, impact, recover.
+    "attack_slash": [
+        Pose(thigh=(14, -8), knee=(8, 6), shoulder=(-10, 140), elbow=(25, 50), abduct=12, lean=-6),
+        Pose(thigh=(18, -10), knee=(12, 6), shoulder=(-5, 100), elbow=(25, 20), abduct=12, lean=5),
+        Pose(thigh=(24, -14), knee=(20, 6), shoulder=(-18, 45), elbow=(25, 15), abduct=12, lean=12),
+        Pose(thigh=(14, -8), knee=(10, 6), shoulder=(-8, 20), elbow=(20, 20), abduct=10, lean=4),
+    ],
+    "attack_smash": [
+        Pose(thigh=(10, -6), knee=(25, 25), shoulder=(10, 120), elbow=(25, 70), abduct=12, lean=8),
+        Pose(thigh=(10, -6), knee=(6, 6), shoulder=(-10, 178), elbow=(20, 5), abduct=12, lean=-10),
+        Pose(thigh=(16, -10), knee=(30, 30), shoulder=(-20, 55), elbow=(25, 5), abduct=12, lean=20),
+        Pose(thigh=(12, -8), knee=(12, 12), shoulder=(-8, 30), elbow=(20, 15), abduct=10, lean=8),
+    ],
+    "attack_stab": [
+        Pose(thigh=(8, -8), knee=(8, 6), shoulder=(20, -30), elbow=(30, 100), abduct=10, lean=-4),
+        Pose(thigh=(12, -10), knee=(12, 6), shoulder=(15, -10), elbow=(30, 95), abduct=10, lean=4),
+        Pose(thigh=(30, -22), knee=(28, 6), shoulder=(-25, 88), elbow=(30, 2), abduct=10, lean=16),
+        Pose(thigh=(12, -8), knee=(10, 6), shoulder=(-5, 35), elbow=(20, 30), abduct=10, lean=6),
+    ],
+    "attack_cast": [
+        Pose(shoulder=(50, 50), elbow=(70, 70), abduct=14),
+        Pose(thigh=(4, -4), shoulder=(40, 130), elbow=(60, 30), abduct=14, lean=-4),
+        Pose(thigh=(12, -8), knee=(10, 6), shoulder=(95, 95), elbow=(5, 5), abduct=14, lean=8),
+        Pose(thigh=(6, -4), shoulder=(30, 40), elbow=(30, 30), abduct=12, lean=2),
+    ],
+    "hit": [
+        Pose(thigh=(-4, 8), knee=(10, 14), shoulder=(-20, -20), elbow=(30, 30), abduct=16, lean=-12),
+        Pose(thigh=(-2, 4), knee=(6, 8), shoulder=(-8, -8), elbow=(20, 20), abduct=12, lean=-5),
+    ],
+    "dead": [
+        Pose(thigh=(30, 25), knee=(45, 40), shoulder=(10, 10), elbow=(25, 25), abduct=14, lean=18),
+        Pose(thigh=(18, 10), knee=(30, 18), shoulder=(-15, 25), elbow=(30, 30), abduct=20, roll=52),
+        Pose(thigh=(8, -4), knee=(12, 8), shoulder=(20, -10), elbow=(15, 20), abduct=25, roll=90),
+    ],
 }
+FIT_MARGIN = 66  # canvas px from the last joint to the half edge: 34 of limb, the rest free
+WIDE = ("dead",)  # a falling body does not fit half an image: these get one frame per image
 
 
 def rot_x(p, deg, about):
@@ -202,14 +253,52 @@ def from_view(q, direction):
     return np.stack([x * math.cos(t) + z * math.sin(t), y, -x * math.sin(t) + z * math.cos(t)], axis=-1)
 
 
+def roll_view(v, deg):
+    """Rotate view-space points in the picture plane; positive tips +y toward +x."""
+    a = math.radians(deg)
+    out = np.array(v, float)
+    out[..., 0] = v[..., 0] * math.cos(a) + v[..., 1] * math.sin(a)
+    out[..., 1] = -v[..., 0] * math.sin(a) + v[..., 1] * math.cos(a)
+    return out
+
+
+def floor_shift(body, j, pose, direction):
+    """View-space offset that lays a rolled body on the ground, centered on the feet line's x."""
+    if not pose.roll:
+        return np.zeros(3)
+    names = list(j)
+    v = roll_view(to_view(np.array([j[n] for n in names]), direction), pose.roll)
+    r = np.array([body.head_h * 0.5 if n == "head" else 4.5 for n in names])
+    return np.array([-((v[:, 0] - r).min() + (v[:, 0] + r).max()) / 2, -(v[:, 1] - r).min(), 0])
+
+
+def fit_shift(body, state, i, direction):
+    """Canvas px that bring a reach past the half back inside it, whole sprite px; extraction undoes them."""
+    if state in WIDE:
+        return 0
+    j = skeleton(body, POSES[state][i])
+    x = to_view(np.array(list(j.values())), direction)[:, 0] * SCALE
+    room = HALF / 2 - FIT_MARGIN
+    dx = max(0, -room - x.min()) - max(0, x.max() - room)
+    return round(dx / GRID) * GRID
+
+
+def half_guide(body, state, i, direction):
+    """One frame's depth on its half, shifted by fit_shift."""
+    dx = fit_shift(body, state, i, direction)
+    wide = render_depth(body, POSES[state][i], direction, size=(2 * HALF, PAIR[1]))
+    return wide.crop((HALF // 2 - dx, 0, HALF // 2 - dx + HALF, PAIR[1]))
+
+
 def render_depth(body, pose, direction, size=(HALF, PAIR[1]), feet_y=FEET_Y, step=2):
     """Orthographic depth of one posed frame, near = white, background black."""
     W, H = size
     j = skeleton(body, pose)
+    shift = floor_shift(body, j, pose, direction)
     cols, rows = np.meshgrid(np.arange(0, W, step) + step / 2, np.arange(0, H, step) + step / 2)
     x = (cols - W / 2) / SCALE
     y = (feet_y - rows) / SCALE
-    keep = (np.abs(x) < 34) & (y > -2) & (y < body.height + 6)
+    keep = (np.abs(x) < W / 2 / SCALE) & (y > -2) & (y < body.height + 6)
     o = np.stack([x[keep], y[keep], np.full(keep.sum(), 40.0)], axis=-1)
     z = np.zeros(len(o))
     hit = np.zeros(len(o), bool)
@@ -220,7 +309,7 @@ def render_depth(body, pose, direction, size=(HALF, PAIR[1]), feet_y=FEET_Y, ste
             break
         q = o[idx].copy()
         q[:, 2] -= z[idx]
-        dist = sdf(body, j, from_view(q, direction))
+        dist = sdf(body, j, from_view(roll_view(q - shift, -pose.roll), direction))
         z[idx] += dist * 0.85
         hit[idx[dist < 0.03]] = True
         alive[idx[(dist < 0.03) | (z[idx] > 80)]] = False
@@ -236,11 +325,11 @@ def render_depth(body, pose, direction, size=(HALF, PAIR[1]), feet_y=FEET_Y, ste
 def joints_2d(body, pose, direction):
     """Named 2D anchors in cell coordinates (sprite px, y down, feet at CELL_FEET)."""
     j = skeleton(body, pose)
+    shift = floor_shift(body, j, pose, direction)
     out = {}
     for name, key in (("head", "head"), ("hand_left", "hand_L"), ("hand_right", "hand_R"),
                       ("foot_left", "ankle_L"), ("foot_right", "ankle_R"), ("pelvis", "pelvis")):
-        v = to_view(np.asarray(j[key]), direction)
-        v = v * SCALE / GRID
+        v = (roll_view(to_view(np.asarray(j[key]), direction), pose.roll) + shift) * SCALE / GRID
         out[name] = [round(CELL_FEET[0] + float(v[0]), 1), round(CELL_FEET[1] - float(v[1]), 1), round(float(v[2]), 1)]
     return out
 
@@ -250,47 +339,62 @@ def pairs(n):
     return [(i, i + 1 if i + 1 < n else 0) for i in range(0, n, 2)]
 
 
+def image_frames(state):
+    """The frames drawn in each generated image of a state."""
+    n = len(POSES[state])
+    return [(i,) for i in range(n)] if state in WIDE else pairs(n)
+
+
 def out_dir(name):
     d = ROOT / "out" / "bodies" / name
     d.mkdir(parents=True, exist_ok=True)
     return d
 
 
-def cmd_guides(name):
+def stride(body, state):
+    """How far the stance foot moves per cycle, in sprite px -> world speed without foot sliding."""
+    feet = [skeleton(body, p)["ankle_L"][2] for p in POSES[state]]
+    return round(float(max(feet) - min(feet)) * SCALE / GRID, 2)
+
+
+def cmd_guides(name, only=None):
     body = BODIES[name]
     gdir = out_dir(name) / "guides"
     gdir.mkdir(exist_ok=True)
     joints = {}
     for state, poses in POSES.items():
         joints[state] = {d: [joints_2d(body, p, d) for p in poses] for d in DIRS}
+        if only and state not in only:
+            continue
         for d in DIRS:
-            for k, (a, b) in enumerate(pairs(len(poses))):
+            for k, frames in enumerate(image_frames(state)):
+                if state in WIDE:
+                    render_depth(body, poses[frames[0]], d, size=PAIR).save(gdir / f"{state}_{d}_{k}.png")
+                    continue
                 img = Image.new("RGB", PAIR)
-                img.paste(render_depth(body, poses[a], d), (0, 0))
-                img.paste(render_depth(body, poses[b], d), (HALF, 0))
+                img.paste(half_guide(body, state, frames[0], d), (0, 0))
+                img.paste(half_guide(body, state, frames[1], d), (HALF, 0))
                 img.save(gdir / f"{state}_{d}_{k}.png")
             print("guides", name, state, d, flush=True)
-    # stride: how far the stance foot moves per walk cycle -> world walk speed (cells per second)
-    feet = [skeleton(body, p) for p in POSES["walk"]]
-    stride = max(f["ankle_L"][2] for f in feet) - min(f["ankle_L"][2] for f in feet)
-    meta = {"joints": joints, "stride_px": round(float(stride) * SCALE / GRID, 2), "height": body.height}
+    meta = {"joints": joints, "stride_px": stride(body, "walk"), "run_stride_px": stride(body, "run"), "height": body.height}
     (out_dir(name) / "joints.json").write_text(json.dumps(meta, indent=1))
-    print(f"wrote {gdir}  stride {stride * SCALE / GRID:.1f}px")
+    print(f"wrote {gdir}  stride {meta['stride_px']:.1f}px, run {meta['run_stride_px']:.1f}px")
 
 
-def cmd_preview(name):
+def cmd_preview(name, only=None):
     """Contact sheet of every pose in every direction at 1/4 size, for checking the rig."""
     body = BODIES[name]
-    rows = [(s, i, p) for s, ps in POSES.items() for i, p in enumerate(ps)]
-    tw, th = HALF // 4, PAIR[1] // 4
+    rows = [(s, i, p) for s, ps in POSES.items() for i, p in enumerate(ps) if not only or s in only]
+    tw, th = PAIR[0] // 4, PAIR[1] // 4
     sheet = Image.new("RGB", (tw * len(DIRS), th * len(rows)))
     for r, (s, i, p) in enumerate(rows):
         for c, d in enumerate(DIRS):
-            sheet.paste(render_depth(body, p, d, step=4).resize((tw, th)), (c * tw, r * th))
+            size = PAIR if s in WIDE else (HALF, PAIR[1])
+            sheet.paste(render_depth(body, p, d, size=size, step=4).resize((size[0] // 4, th)), (c * tw, r * th))
     sheet.save(out_dir(name) / "rig_preview.png")
     print("wrote", out_dir(name) / "rig_preview.png")
 
 
 if __name__ == "__main__":
-    cmd, name = sys.argv[1], sys.argv[2]
-    {"guides": cmd_guides, "preview": cmd_preview}[cmd](name)
+    cmd, name, *only = sys.argv[1:]
+    {"guides": cmd_guides, "preview": cmd_preview}[cmd](name, only)

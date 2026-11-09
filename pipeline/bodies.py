@@ -25,7 +25,13 @@ from sheet import (STYLE, call, clean_alpha, controlnet_unit, figure_mask, figur
                    prompt, b64png)
 
 ART = ROOT.parent / "art" / "bodies"
-STATES = {"idle": {"fps": 4, "loop": True}, "walk": {"fps": 10, "loop": True}}
+STATES = {
+    "idle": {"fps": 4, "loop": True}, "walk": {"fps": 10, "loop": True}, "run": {"fps": 14, "loop": True},
+    # hitFrame: the frame where the blow lands
+    "attack_slash": {"fps": 12, "loop": False, "hitFrame": 2}, "attack_smash": {"fps": 9, "loop": False, "hitFrame": 2},
+    "attack_stab": {"fps": 14, "loop": False, "hitFrame": 2}, "attack_cast": {"fps": 8, "loop": False, "hitFrame": 2},
+    "hit": {"fps": 8, "loop": False}, "dead": {"fps": 6, "loop": False},
+}
 PPU = 87.5  # sprite px per world unit, same for every body (spec)
 EYE_PX = {"S": 1000, "SW": 1000, "W": 300, "NW": 0, "N": 0}  # blue head px: least on a face, most on a back
 BLINK_DIRS = ("S", "SW", "W")  # directions with a visible face
@@ -43,6 +49,13 @@ SPECIES = {
 STATE_TAGS = {
     "idle": "standing, arms at sides, closed mouth",
     "walk": "walking, mid-stride, closed mouth",
+    "run": "running, mid-stride, action pose, closed mouth",
+    "attack_slash": "fighting, swinging arm, action pose, closed mouth",
+    "attack_smash": "fighting, arm raised overhead, action pose, closed mouth",
+    "attack_stab": "fighting, lunging, arm extended forward, action pose, closed mouth",
+    "attack_cast": "hands raised forward, spellcasting pose, closed mouth",
+    "hit": "flinching, leaning back, closed mouth",
+    "dead": "lying on back, from above, legs straight, arms at sides, unconscious",
 }
 # The depth guide already places the two figures; "multiple views" tags invited extra heads and
 # mini figures once the guide was weaker (S), so only sameness is asked for.
@@ -88,22 +101,22 @@ def main_figure(img):
     return lab == 1 + int(np.argmax(stats[1:, cv2.CC_STAT_AREA])) if n > 1 else fig
 
 
-def neck_y(body):
-    """Generation row of the neck: everything above it is head."""
-    return rig.FEET_Y - int((body.height - body.head_h) * rig.SCALE)
+def neck_y(body, drop=0):
+    """Generation row of the neck: everything above it is head. `drop`: px a crouch or lean lowers the head."""
+    return rig.FEET_Y - int((body.height - body.head_h) * rig.SCALE) + drop
 
 
-def eye_mask(half, body):
+def eye_mask(half, body, drop=0):
     """Blue pixels in the head: only the eyes are blue, so this tells a face from the back of a head."""
     a = np.asarray(half).astype(np.int16)
     out = (a[..., 2] > a[..., 0] + 40) & (a[..., 2] > 130)
-    out[neck_y(body):] = False
+    out[neck_y(body, drop):] = False
     return out
 
 
-def to_art_cell(half, fig, n_colors=48):
-    """Half + figure mask -> CELL RGBA, one sprite px per GRID block of the LoCon's own pixel grid."""
-    g, h, w = rig.GRID, rig.PAIR[1] // rig.GRID, rig.HALF // rig.GRID
+def to_art_cell(half, fig, n_colors=48, dx=0):
+    """Half (or whole image) + figure mask -> CELL RGBA, one sprite px per GRID block of the LoCon's own pixel grid."""
+    g, h, w = rig.GRID, rig.PAIR[1] // rig.GRID, half.width // rig.GRID
     rgb = np.median(np.asarray(half).reshape(h, g, w, g, 3), axis=(1, 3)).astype(np.uint8)
     alpha = fig.reshape(h, g, w, g).mean(axis=(1, 3)) >= 0.5
     out = Image.new("RGBA", (rig.CELL, rig.CELL))
@@ -112,15 +125,20 @@ def to_art_cell(half, fig, n_colors=48):
     # the palette comes from figure pixels only, so small colors like the eyes keep their own entries
     q = Image.fromarray(rgb[alpha][None]).quantize(n_colors, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
     rgb[alpha] = np.array(q.getpalette()).reshape(-1, 3)[np.asarray(q)[0]]
-    out.paste(Image.fromarray(np.dstack([rgb, alpha * np.uint8(255)]), "RGBA"), rig.CELL_ORIGIN)
+    out.paste(Image.fromarray(np.dstack([rgb, alpha * np.uint8(255)]), "RGBA"), (rig.CELL_FEET[0] - w // 2 + dx, rig.CELL_ORIGIN[1]))
     return out
 
 
-def snap_feet(cell):
+def bob_px(state, i):
+    """Sprite px a pose floats above the ground (the run's flight frames)."""
+    return round(rig.POSES[state][i].bob * rig.SCALE / rig.GRID)
+
+
+def snap_feet(cell, lift=0):
     """Stand the drawn feet on the feet line: the rig keeps a foot grounded every frame, so a
     drift of a few px is the model's and would read as jitter. Larger gaps stay for QC to report."""
     ys = np.nonzero(np.asarray(cell)[..., 3].any(axis=1))[0]
-    dy = rig.CELL_FEET[1] - int(ys.max()) if len(ys) else 0
+    dy = rig.CELL_FEET[1] - lift - int(ys.max()) if len(ys) else 0
     return Image.fromarray(np.roll(np.asarray(cell), dy, axis=0), "RGBA") if abs(dy) <= 3 else cell
 
 
@@ -142,11 +160,11 @@ def touches_edge(fig):
     return bool(fig[:, 0].any() or fig[:, -1].any())
 
 
-def shirt_share(half, body):
+def shirt_share(half, body, drop=0, cx=rig.HALF // 2):
     """Share of grey shirt pixels in the torso box of one half."""
     a = np.asarray(half).astype(np.int16)
-    y0 = neck_y(body)
-    box = a[y0 + 40:y0 + int(body.torso_h * rig.SCALE), rig.HALF // 2 - 70:rig.HALF // 2 + 70]
+    y0 = neck_y(body, drop)
+    box = a[y0 + 40:y0 + int(body.torso_h * rig.SCALE), max(cx - 70, 0):cx + 70]
     chroma, value = box.max(axis=2) - box.min(axis=2), box.mean(axis=2)
     return float(((chroma < 24) & (value > 90) & (value < 240)).mean())
 
@@ -181,13 +199,15 @@ def match_tone(cell, target, body):
     return Image.fromarray(a, "RGBA")
 
 
-def split_eyes(cell, body, d):
+def split_eyes(cell, body, d, head_x=rig.CELL_FEET[0]):
     """Cut brows and eyes off a face cell -> (faceless cell, eye sprite, sprite xy in the cell, blue px left)."""
     a = np.asarray(cell).copy()
     alpha = a[..., 3] > 0
-    top = int(np.nonzero(alpha.any(axis=1))[0].min())
     h = int(body.head_h * rig.SCALE / rig.GRID)
-    xs = np.nonzero(alpha[top:top + int(h * 0.4)].any(axis=0))[0]  # the upper skull has no ears
+    skull = alpha.copy()
+    skull[:, :max(int(head_x - 0.62 * h), 0)] = skull[:, int(head_x + 0.62 * h):] = False  # a raised hand is not the skull
+    top = int(np.nonzero(skull.any(axis=1))[0].min())
+    xs = np.nonzero(skull[top:top + int(h * 0.4)].any(axis=0))[0]  # the upper skull has no ears
     left, w = int(xs.min()), int(xs.max() - xs.min())
     zone = np.zeros(alpha.shape, bool)
     zone[top + int(0.3 * h):top + int(0.82 * h), max(left - 3 * (d != "S"), 0) + int(EYE_ZONE[d][0] * w):left + int(EYE_ZONE[d][1] * w)] = True
@@ -233,13 +253,34 @@ def halves(img):
     return img.crop((0, 0, rig.HALF, rig.PAIR[1])), img.crop((rig.HALF, 0, rig.PAIR[0], rig.PAIR[1]))
 
 
-def qc_pair(img, body, direction):
-    """Problems with one generated pair (empty list = ok)."""
+def parts(img, state):
+    """The frames in one generated image: both halves, or the whole image for a wide state."""
+    return (img,) if state in rig.WIDE else halves(img)
+
+
+def eyes_off_face(half, drawn, body, direction, drop):
+    """Eyes where the rig's head has no face: the model turned the head or slid the eyes down it."""
+    dist = cv2.distanceTransform(drawn.astype(np.uint8), cv2.DIST_L2, 5)
+    y, x = np.unravel_index(int(dist.argmax()), dist.shape)  # the head is the fattest part of a guide
+    r = dist[y, x]
+    ys, xs = np.nonzero(eye_mask(half, body, drop))
+    if not len(xs):
+        return False
+    across, down = (xs - x + r) / (2 * r), (ys - y + r) / (2 * r)
+    return float(((across > EYE_ZONE[direction][1] + 0.05) | (down < 0.3) | (down > 0.82)).mean()) > 0.25
+
+
+def qc_pair(img, body, direction, guide, state):
+    """Problems with one generated image (empty list = ok). The guide says where this pose should be."""
     issues = []
     if not light_background(img):
         issues.append("dark background")
-    want = body.height * rig.SCALE
-    for side, half in zip(("left", "right"), halves(img)):
+    fallen = state == "dead"
+    for side, half, g in zip(("left", "right"), parts(img, state), parts(guide, state)):
+        drawn = np.asarray(g.convert("L")) > 0
+        rows = np.nonzero(drawn.any(axis=1))[0]
+        want, feet = rows.max() - rows.min(), int(rows.max())
+        drop = int(rows.min()) - (rig.FEET_Y - int(body.height * rig.SCALE))
         figs = figures(figure_mask(half), 0.01)
         if not figs:
             issues.append(f"{side}: no figure")
@@ -249,40 +290,62 @@ def qc_pair(img, body, direction):
         fig = main_figure(half)
         if touches_edge(fig):
             issues.append(f"{side}: cut by the half edge")
-        if shirt_share(half, body) < SHIRT_MIN:
+        ys = np.nonzero(fig.any(axis=1))[0]
+        h = ys.max() - ys.min()
+        if abs(ys.max() - feet) > 25:
+            issues.append(f"{side}: feet at {ys.max()} vs {feet}")
+        if fallen:  # the upright checks mean nothing on a body lying down, but its length does
+            xs, span = np.nonzero(fig.any(axis=0))[0], np.nonzero(drawn.any(axis=0))[0]
+            if xs.max() - xs.min() < 0.85 * (span.max() - span.min()):
+                issues.append(f"{side}: curled up, {xs.max() - xs.min()} wide vs {span.max() - span.min()}")
+            if fig.sum() > 1.3 * drawn.sum():  # a giant drawn over the small lying body (good ones: 0.94-1.18)
+                issues.append(f"{side}: too big, {fig.sum() / drawn.sum():.1f}x the guide")
+            rgb = np.asarray(half).astype(int)[fig]
+            tone = rgb.mean(axis=1)
+            if (((abs(rgb[:, 0] - rgb[:, 2]) < 25) & (tone > 110) & (tone < 215)).mean() < 0.03) or (tone < 70).mean() < 0.015:
+                issues.append(f"{side}: no clothes")  # the torso box means nothing here, so the whole figure votes
+            if (tone < 175).mean() < 0.15:
+                issues.append(f"{side}: no outline")
+            continue
+        y0 = neck_y(body, drop)
+        cx = int(np.nonzero(drawn[y0 + 40:y0 + int(body.torso_h * rig.SCALE)].any(axis=0))[0].mean())
+        if shirt_share(half, body, drop, cx) < SHIRT_MIN:
             issues.append(f"{side}: no shirt")
-        eyes = int(eye_mask(half, body).sum())
+        eyes = int(eye_mask(half, body, drop).sum())
         if EYE_PX[direction] == 0 and eyes:
             issues.append(f"{side}: face on a back view")
         elif eyes < EYE_PX[direction]:
             issues.append(f"{side}: no eyes")
-        ys = np.nonzero(fig.any(axis=1))[0]
-        h = ys.max() - ys.min()
+        elif eyes and eyes_off_face(half, drawn, body, direction, drop):
+            issues.append(f"{side}: eyes off the face")
         if not 0.85 * want <= h <= 1.12 * want:
             issues.append(f"{side}: height {h} vs {want:.0f}")
-        if abs(ys.max() - rig.FEET_Y) > 25:
-            issues.append(f"{side}: feet at {ys.max()} vs {rig.FEET_Y}")
     return issues
 
 
 def generate(name, state, direction, k, seed, ref=None):
     body = rig.BODIES[name]
     guide = Image.open(ROOT / "out" / "bodies" / name / "guides" / f"{state}_{direction}_{k}.png").convert("RGB")
-    units = [controlnet_unit(guide, "none", *DEPTH[direction], STYLE["controlnet_depth"])]
+    # the model curls a fallen body up unless depth holds it down
+    units = [controlnet_unit(guide, "none", *((0.9, 0.8) if state == "dead" else DEPTH[direction]), STYLE["controlnet_depth"])]
     if ref is not None:
         units.append(ref_unit(ref))
     out = fdir(name) / f"{state}_{direction}_{k}.png"
+    fallen, faces = state == "dead", EYE_PX[direction] > 0
+    eyes = "blue eyes, " if faces and not fallen else ""  # a fallen body keeps its eyes closed, in the frame
+    face, face_neg = ("closed eyes", "open eyes, blue eyes, " + FACE_NEG[direction]) if fallen and faces else (FACE_TAGS[direction], FACE_NEG[direction])
+    if fallen:  # the small lying body leaves room the model fills with a big muscular man (dwarf's tags)
+        face_neg = prompt(face_neg, "muscular, abs, giant, large body")
     best, best_issues, best_log = None, None, None
     for attempt in range(3):
         img = call("txt2img", {
             "prompt": prompt(lora(direction), STYLE["quality"], "pixel art, chibi, full body, white background, simple background",
-                             SPECIES[name], BASE.format(eyes="" if EYE_PX[direction] == 0 else "blue eyes, "), STATE_TAGS[state], PAIR_TAGS, STYLE["dir_tags"][direction],
-                             FACE_TAGS[direction]),
-            "negative_prompt": prompt(NEGATIVE, STYLE["dir_negative"][direction], FACE_NEG[direction]),
+                             SPECIES[name], BASE.format(eyes=eyes), STATE_TAGS[state], PAIR_TAGS, STYLE["dir_tags"][direction], face),
+            "negative_prompt": prompt(NEGATIVE, STYLE["dir_negative"][direction], face_neg),
             "seed": seed + attempt * 1000, "width": rig.PAIR[0], "height": rig.PAIR[1],
             "alwayson_scripts": {"controlnet": {"args": units}},
         }, out.with_suffix(".json"))
-        issues = qc_pair(img, body, direction)
+        issues = qc_pair(img, body, direction, guide, state)
         print(f"  {state} {direction} {k} seed {seed + attempt * 1000}: {'; '.join(issues) or 'ok'}", flush=True)
         if best is None or len(issues) < len(best_issues):
             best, best_issues, best_log = img, issues, out.with_suffix(".json").read_text()
@@ -298,7 +361,7 @@ def cmd_gen(a):
         ref_path = fdir(a.body) / f"idle_{direction}_0.png"
         ref = None
         for state in a.states or list(STATES):
-            for k, _ in enumerate(rig.pairs(len(rig.POSES[state]))):
+            for k, _ in enumerate(rig.image_frames(state)):
                 out = fdir(a.body) / f"{state}_{direction}_{k}.png"
                 if out.exists() and not a.force:
                     continue
@@ -343,9 +406,12 @@ def cmd_check(a):
     """List the pairs failing qc_pair; with --redo regenerate them (a direction's reference first)."""
     for d in rig.DIRS:
         for state in STATES:
-            for k, _ in enumerate(rig.pairs(len(rig.POSES[state]))):
+            for k, _ in enumerate(rig.image_frames(state)):
                 src = fdir(a.body) / f"{state}_{d}_{k}.png"
-                issues = qc_pair(Image.open(src).convert("RGB"), rig.BODIES[a.body], d)
+                if not src.exists():
+                    continue
+                guide = Image.open(ROOT / "out" / "bodies" / a.body / "guides" / src.name).convert("RGB")
+                issues = qc_pair(Image.open(src).convert("RGB"), rig.BODIES[a.body], d, guide, state)
                 if issues:
                     print(a.body, state, d, k, "; ".join(issues), flush=True)
                     if a.redo:
@@ -385,17 +451,18 @@ def load_cells(name, body, state, d):
     """Cells of one state/direction (None where a pair is missing) and whether the half edge cut them."""
     n = len(rig.POSES[state])
     cells, cut = [None] * n, [False] * n
-    for k, (i0, i1) in enumerate(rig.pairs(n)):
+    for k, frames in enumerate(rig.image_frames(state)):
         src = fdir(name) / f"{state}_{d}_{k}.png"
         if not src.exists():
             continue
-        guides = halves(Image.open(ROOT / "out" / "bodies" / name / "guides" / f"{state}_{d}_{k}.png"))
-        for idx, half, guide in zip((i0, i1), halves(Image.open(src).convert("RGB")), guides):
+        guides = parts(Image.open(ROOT / "out" / "bodies" / name / "guides" / f"{state}_{d}_{k}.png"), state)
+        for idx, half, guide in zip(frames, parts(Image.open(src).convert("RGB"), state), guides):
             if idx == 0 and k > 0:
                 continue  # an odd last frame was paired with frame 0: keep the first one
             fig = clear_pockets(half, main_figure(half), body, guide)
             cut[idx] = touches_edge(fig)
-            cells[idx] = snap_feet(clean_alpha(to_art_cell(half, fig), min_px=6))
+            dx = -rig.fit_shift(body, state, idx, d) // rig.GRID
+            cells[idx] = snap_feet(clean_alpha(to_art_cell(half, fig, dx=dx), min_px=6), bob_px(state, idx))
     return cells, cut
 
 
@@ -421,7 +488,7 @@ def cmd_extract(a):
     name = a.body
     body = rig.BODIES[name]
     meta = json.loads((ROOT / "out" / "bodies" / name / "joints.json").read_text())
-    states = list(STATES)
+    states = [s for s in STATES if (fdir(name) / f"{s}_S_0.png").exists()]  # a body gets its states one by one
     cols = max(len(rig.POSES[s]) for s in states)
     sheet = Image.new("RGBA", (cols * rig.CELL, len(states) * len(rig.DIRS) * rig.CELL))
     drawn = {(s, d): load_cells(name, body, s, d) for s in states for d in rig.DIRS}
@@ -434,21 +501,22 @@ def cmd_extract(a):
     eye_at = {}
     for si, state in enumerate(states):
         n = len(rig.POSES[state])
-        dirs_rects, anchors[state], eye_at[state] = [], {}, {}
+        dirs_rects, anchors[state] = [], {}
         for di, d in enumerate(rig.DIRS):
             cells, cut = drawn[state, d]
             qc[f"{state}_{d}"] = frame_qc(cells, meta["joints"][state][d], state, cut)  # before tones hide drift
             cells = [match_tone(c, tone[d], body) if c else c for c in cells]
-            if d in BLINK_DIRS:
-                parts = [split_eyes(c, body, d) if c else (None, None, [0, 0], 0) for c in cells]
-                cells = [p[0] for p in parts]
-                eye_at[state][d] = [p[2] for p in parts]
-                for f, p in zip(qc[f"{state}_{d}"], parts):
+            if d in BLINK_DIRS and state != "dead":  # dead frames are drawn with their eyes closed
+                heads = [j["head"][0] for j in meta["joints"][state][d]]
+                split = [split_eyes(c, body, d, x) if c else (None, None, [0, 0], 0) for c, x in zip(cells, heads)]
+                cells = [p[0] for p in split]
+                eye_at.setdefault(state, {})[d] = [p[2] for p in split]
+                for f, p in zip(qc[f"{state}_{d}"], split):
                     if p[3]:
                         f["issues"].append(f"{p[3]} eye px left")
                 if state == "idle":
                     row = BLINK_DIRS.index(d) * EYES_H
-                    eyes.paste(vivid_eyes(parts[0][1]), (0, row))
+                    eyes.paste(vivid_eyes(split[0][1]), (0, row))
                     eyes.paste(closed_eyes(name, body, d, tone[d]), (EYES_W, row))
             rects = []
             for i, c in enumerate(cells):
@@ -469,12 +537,12 @@ def cmd_extract(a):
     art.mkdir(parents=True, exist_ok=True)
     sheet.save(art / "sheet.png")
     eyes.save(art / "eyes.png")
-    walk = STATES["walk"]
-    # one walk cycle (6 frames) covers two strides: world speed in tiles/s = 2 strides per cycle
-    cycle_s = len(rig.POSES["walk"]) / walk["fps"]
+    # one cycle (6 frames) covers two strides: world speed in tiles/s = 2 strides per cycle
+    speed = lambda state, px: round(2 * px / PPU / (len(rig.POSES[state]) / STATES[state]["fps"]), 3)
     save_json(art / "sheet.json", {
         "body": name, "frameW": rig.CELL, "frameH": rig.CELL, "feetY": rig.CELL_FEET[1], "ppu": PPU,
-        "height": body.height, "walkSpeed": round(2 * meta["stride_px"] / PPU / cycle_s, 3),
+        "height": body.height, "walkSpeed": speed("walk", meta["stride_px"]),
+        **({"runSpeed": speed("run", meta["run_stride_px"])} if "run" in states else {}),
         "states": out_states, "anchors": anchors,
         "eyes": {"w": EYES_W, "h": EYES_H, "dirs": list(BLINK_DIRS), "at": eye_at},  # rows of eyes.png; columns open, closed
     })
@@ -502,9 +570,11 @@ def frame_qc(cells, joints, state, cut):
             issues.append("cut by the half edge")
         # feet: the lowest rig foot should sit on the drawn feet line
         foot = max(joints[i]["foot_left"][1], joints[i]["foot_right"][1])
-        if abs(m["bottom"] - rig.CELL_FEET[1]) > 1 and foot > rig.CELL_FEET[1] - 5:
+        line = rig.CELL_FEET[1] - bob_px(state, i)
+        if abs(m["bottom"] - line) > 1 and foot > line - 5:
             issues.append(f"feet at {m['bottom']}")
-        if m0 and abs(m["top"] - m0["top"]) > 3 + (3 if state == "walk" else 0):
+        planned = joints[i]["head"][1] - joints[0]["head"][1]  # crouches and leans move the head on purpose
+        if m0 and state != "dead" and abs(m["top"] - m0["top"] - planned) > 3 + (3 if state != "idle" else 0):
             issues.append(f"head top {m['top']} vs {m0['top']}")
         s = skin_lab(c)
         if s is not None and s0 is not None and np.linalg.norm(s - s0) > 6:
