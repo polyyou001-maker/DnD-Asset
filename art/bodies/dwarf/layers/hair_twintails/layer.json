@@ -1,0 +1,9 @@
+{
+  "item": "hair_twintails",
+  "slot": "hair",
+  "dye": [
+    "hair"
+  ],
+  "method": "anchored",
+  "back": "back.png"
+}

@@ -20,6 +20,7 @@
     },
     "outfit_cleric": {
       "mask": "outfit",
+      "skirt": true,
       "slot": "body",
       "class": "cleric",
       "prompt": "white priest robe, long robe, ankle-length robe, blue trim, gold embroidery, capelet, long sleeves, brown boots",
@@ -35,6 +36,7 @@
     },
     "outfit_wizard": {
       "mask": "outfit",
+      "skirt": true,
       "slot": "body",
       "class": "wizard",
       "prompt": "blue wizard robe, long robe, floor-length robe, robe covering legs, wide sleeves, gold trim, brown belt, white collar",
@@ -51,6 +53,7 @@
     },
     "hair_long": {
       "mask": "hair_long",
+      "back": true,
       "slot": "hair",
       "prompt": "white hair, very long hair, straight hair, bangs",
       "negative": "hat, halo"
@@ -63,6 +66,7 @@
     },
     "hair_twintails": {
       "mask": "hair_tails",
+      "back": true,
       "slot": "hair",
       "prompt": "white hair, twintails, bangs, hair ribbon",
       "negative": "hat"

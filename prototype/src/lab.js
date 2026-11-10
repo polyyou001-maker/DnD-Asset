@@ -18,6 +18,8 @@ const BODIES_URL = new URL('../art/bodies/', location.href).href;
 const BODIES = [[null, 'Paper doll'], ['human', 'Human'], ['elf', 'Elf'], ['dwarf', 'Dwarf'], ['halfling', 'Halfling']];
 const WEAPONS = [['longsword', 'Sword'], ['mace', 'Mace'], ['dagger', 'Dagger'], ['staff', 'Staff'], [null, 'Unarmed']];
 const SHIELDS = [[null, 'None'], ['shield_kite', 'Kite'], ['shield_round', 'Round']];
+const HAIRS = [['hair_short', 'Short'], ['hair_bob', 'Bob'], ['hair_long', 'Long'], ['hair_twintails', 'Twintails']];
+const OUTFITS = Object.values(CLASSES).map((c) => c.kit.outfit);
 const STATES = ['idle', 'walk', 'run', 'attack', 'block', 'hit', 'sit', 'dead'];
 const DAMAGE = { slash: [8, 3], smash: [6, 3], stab: [4, 3], cast: [10, 0], punch: [1, 2] }; // [die, bonus]
 const DIR_NAMES = ['S', 'SW', 'W', 'NW', 'N'];
@@ -114,8 +116,9 @@ class Lab {
     const style = armed === 'punch' ? 'stab' : armed; // bare hands use the stab frames (spec)
     const { eyes, outfit, hair, hairColor, cloth1, cloth2 } = this.look;
     const worn = [outfit, hair].filter((id) => b.layers[id]); // clothes under hair
-    const layers = worn.map((id) => dyeLayer(b.layers[id].image, { id, slot: b.layers[id].slot === 'hair' ? 'hair' : 'body' },
-      this.look, this.set.manifest));
+    const dye = (id, image) => dyeLayer(image, { id, slot: b.layers[id].slot === 'hair' ? 'hair' : 'body' },
+      this.look, this.set.manifest);
+    const layers = worn.map((id) => ({ image: dye(id, b.layers[id].image), back: b.layers[id].back && dye(id, b.layers[id].back) }));
     return (b.composed[[eyes, style, ...worn, hairColor, cloth1, cloth2].join(' ')] ??=
       composeBody(b.meta, b.image, b.eyes, eyes, style, layers));
   }
@@ -128,12 +131,17 @@ class Lab {
         const [image, eyes] = ['sheet', 'eyes'].map((f) => Object.assign(new Image(), { src: `${BODIES_URL}${name}/${f}.png` }));
         await Promise.all([image.decode(), eyes.decode()]);
         const layers = {}; // hair and clothes made for this body so far (pipeline/layers.py)
-        await Promise.all([this.look.outfit, this.look.hair].map(async (id) => {
+        await Promise.all([...OUTFITS, ...HAIRS.map(([id]) => id)].map(async (id) => {
           const res = await fetch(`${BODIES_URL}${name}/layers/${id}/layer.json`);
           if (!res.ok) return;
-          const image = Object.assign(new Image(), { src: `${BODIES_URL}${name}/layers/${id}/sheet.png` });
-          await image.decode();
-          layers[id] = { ...(await res.json()), image };
+          const info = await res.json();
+          const load = async (file) => {
+            const img = Object.assign(new Image(), { src: `${BODIES_URL}${name}/layers/${id}/${file}` });
+            await img.decode();
+            return img;
+          };
+          const [image, back] = await Promise.all([load('sheet.png'), info.back ? load(info.back) : null]);
+          layers[id] = { ...info, image, back };
         }));
         this.bodySheets[name] = { meta, image, eyes, layers, composed: {} };
       } catch (e) {
@@ -365,6 +373,7 @@ class Lab {
     this.bodyBtns = BODIES.map(([id, name]) => [btn('bodies', name, () => this.setBody(id)), id]);
     this.eyeBtns = Object.entries(EYE_COLORS).map(([name, hex]) => [btn('eyes', name, () => this.setLook({ eyes: hex })), hex]);
     this.classBtns = Object.entries(CLASSES).map(([id, c]) => [btn('classes', c.name, () => this.setLook({ ...c.kit })), c.kit.outfit]);
+    this.hairBtns = HAIRS.map(([id, name]) => [btn('hairs', name, () => this.setLook({ hair: id })), id]);
     this.weaponBtns = WEAPONS.map(([id, name], i) => [btn('weapons', `${name} ${i + 1}`, () => this.setLook({ weapon: id })), id]);
     this.shieldBtns = SHIELDS.map(([id, name]) => [btn('shields', name, () => this.setLook({ shield: id })), id]);
     for (const s of STATES) btn('states', s, () => this.play(s));
@@ -386,6 +395,7 @@ class Lab {
     for (const [b, id] of this.bodyBtns) b.classList.toggle('on', id === this.body);
     for (const [b, hex] of this.eyeBtns) b.classList.toggle('on', hex === this.look.eyes);
     for (const [b, outfit] of this.classBtns) b.classList.toggle('on', outfit === this.look.outfit);
+    for (const [b, id] of this.hairBtns) b.classList.toggle('on', id === this.look.hair);
     for (const [b, id] of this.weaponBtns) b.classList.toggle('on', id === (this.look.weapon ?? null));
     for (const [b, id] of this.shieldBtns) b.classList.toggle('on', id === (this.look.shield ?? null));
   }

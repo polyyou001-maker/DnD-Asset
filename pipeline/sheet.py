@@ -132,10 +132,10 @@ def prompt(*parts):
 
 # ---------------------------------------------------------------- geometry
 
-def figure_mask(img):
+def figure_mask(img, light_min=215):
     """Figure = everything except light, low-saturation pixels connected to the border."""
     a = np.asarray(img.convert("RGB")).astype(np.int16)
-    light = (a.min(axis=2) > 215) & ((a.max(axis=2) - a.min(axis=2)) < 22)
+    light = (a.min(axis=2) > light_min) & ((a.max(axis=2) - a.min(axis=2)) < 22)
     h, w = light.shape
     ff = light.astype(np.uint8)
     pad = np.zeros((h + 2, w + 2), np.uint8)

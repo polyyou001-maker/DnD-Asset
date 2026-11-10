@@ -81,12 +81,12 @@ def item_cell(name, item, kind, d, key=1):
     fig = bodies.main_figure(base)
     m = np.asarray(Image.open(odir(name, item) / f"{stem(d, key)}_mask.png")) > 127
     if kind == "outfit":
-        alpha = figure_mask(img) & m
+        alpha = figure_mask(img, 245) & m  # a white robe is ~230: only pure white is background
     else:  # the v2 rule (sheet.cmd_extract): pixels the inpaint changed; white hair over pale skin changes little
         now, was = np.asarray(img).astype(np.int16), np.asarray(base).astype(np.int16)
         chroma = lambda x: x.max(axis=2) - x.min(axis=2)
         diff = np.abs(now - was).sum(axis=2)
-        alpha = m & (figure_mask(img) | fig) & ((diff > 60) | (fig & (chroma(now) < 20) & (chroma(was) > 25) & (diff > 12)))
+        alpha = m & (figure_mask(img, 245) | fig) & ((diff > 60) | (fig & (chroma(now) < 20) & (chroma(was) > 25) & (diff > 12)))
     return clean_alpha(bodies.to_art_cell(img, alpha), min_px=6), bodies.to_art_cell(base, fig)
 
 
@@ -122,8 +122,12 @@ def shift(img, move):
     return out
 
 
-def bone_pieces(layer, ref_j, d, body):
-    """Split an outfit cell by nearest bone (distance to the segment minus the limb's drawn radius)."""
+LEGS = [n for n in BONES if n.startswith(("thigh", "shin"))]
+
+
+def bone_pieces(layer, ref_j, d, body, skirt=False):
+    """Split an outfit cell by nearest bone (distance to the segment minus the limb's drawn radius).
+    skirt: a robe's cloth below the hips is one piece on the pelvis, not cut between the legs."""
     a = np.asarray(layer)
     ys, xs = np.nonzero(a[..., 3])
     pts = np.stack([xs, ys], axis=1).astype(float)
@@ -143,9 +147,14 @@ def bone_pieces(layer, ref_j, d, body):
     # A limb in front of the torso (the near arm in a side view) is what is drawn there: it takes those
     # pixels with it, and the torso keeps them too, so no hole opens when the limb swings away.
     owner, under = np.argmin(front, axis=0), np.argmin(cost, axis=0)
+    names = list(BONES)
+    low = np.zeros(len(pts), bool)
+    if skirt:
+        hip_y = (ref_j["hip_L"][1] + ref_j["hip_R"][1]) / 2
+        low = (ys > hip_y) & np.isin(owner, [names.index(n) for n in ["torso"] + LEGS])
     pieces = {}
-    for i, name in enumerate(BONES):
-        sel = (owner == i) | ((under == i) & (name == "torso"))
+    for i, name in enumerate(names + ["skirt"]):
+        sel = low if name == "skirt" else ((owner == i) | ((under == i) & (name == "torso"))) & ~low
         if sel.any():
             piece = np.zeros_like(a)
             piece[ys[sel], xs[sel]] = a[ys[sel], xs[sel]]
@@ -158,6 +167,12 @@ def bone_angle(j, name):
     return math.degrees(math.atan2(*(q - p)[::-1])) if np.linalg.norm(q - p) > 1 else None
 
 
+def spread(j):
+    """Angle between the thighs: how far apart the legs are."""
+    a, b = bone_angle(j, "thigh_L"), bone_angle(j, "thigh_R")
+    return 0 if a is None or b is None else abs((a - b + 180) % 360 - 180)
+
+
 def pick_key(keys, j, name):
     """(piece, key joints) for a bone: among the key frames that drew most of it, the one whose bone
     points most like this frame's (a leg hidden in one key frame has few pixels there)."""
@@ -166,6 +181,8 @@ def pick_key(keys, j, name):
         return None
     most = max((pc[..., 3] > 0).sum() for pc, _ in have)
     have = [h for h in have if (h[0][..., 3] > 0).sum() >= 0.4 * most]
+    if name == "skirt":  # the key frame whose legs are as far apart as this frame's
+        return min(have, key=lambda h: abs(spread(h[1]) - spread(j)))
     a = bone_angle(j, name)
     off = lambda h: 0 if a is None or bone_angle(h[1], name) is None else abs((a - bone_angle(h[1], name) + 180) % 360 - 180)
     return min(have, key=off)
@@ -173,20 +190,27 @@ def pick_key(keys, j, name):
 
 def place_outfit(keys, j, body_alpha):
     """Each piece follows its bone (turn about the bone's first joint, then move it there), far ones first.
+    A skirt turns with the torso about the pelvis, is drawn over the legs and is not clipped to the body.
     keys: [(pieces, joints of that key frame)]."""
-    depth = lambda name: (j[BONES[name][0]][2] + j[BONES[name][1]][2]) / 2 - (0.5 if name == "torso" else 0)
+    bone_depth = lambda name: (j[BONES[name][0]][2] + j[BONES[name][1]][2]) / 2
+    depth = lambda name: (max(bone_depth(n) for n in ["torso"] + LEGS) + 0.01 if name == "skirt"
+                          else bone_depth(name) - (0.5 if name == "torso" else 0))
     out = np.zeros((rig.CELL, rig.CELL, 4), np.uint8)
-    for name in sorted([n for n in BONES if any(n in pieces for pieces, _ in keys)], key=depth):
+    free = np.zeros((rig.CELL, rig.CELL), bool)  # skirt pixels, not clipped
+    for name in sorted([n for n in list(BONES) + ["skirt"] if any(n in pieces for pieces, _ in keys)], key=depth):
         piece, ref_j = pick_key(keys, j, name)
-        p0, q0 = (np.array(ref_j[n][:2]) for n in BONES[name])
-        p, q = (np.array(j[n][:2]) for n in BONES[name])
+        ends = BONES["torso"][::-1] if name == "skirt" else BONES[name]  # the skirt hangs from the pelvis
+        p0, q0 = (np.array(ref_j[n][:2]) for n in ends)
+        p, q = (np.array(j[n][:2]) for n in ends)
         turn = math.degrees(math.atan2(*(q - p)[::-1]) - math.atan2(*(q0 - p0)[::-1])) if np.linalg.norm(q - p) > 1 else 0.0
         m = cv2.getRotationMatrix2D((float(p0[0]), float(p0[1])), -turn, 1.0)
         m[:, 2] += p - p0
         moved = cv2.warpAffine(piece, m, (rig.CELL, rig.CELL), flags=cv2.INTER_NEAREST)
-        out[moved[..., 3] > 0] = moved[moved[..., 3] > 0]
+        on = moved[..., 3] > 0
+        out[on] = moved[on]
+        free[on] = name == "skirt"
     # clothes stay on the drawn body: 2 sprite px of slack for cloth standing off it
-    out[~cv2.dilate(body_alpha.astype(np.uint8), np.ones((5, 5), np.uint8)).astype(bool)] = 0
+    out[~cv2.dilate(body_alpha.astype(np.uint8), np.ones((5, 5), np.uint8)).astype(bool) & ~free] = 0
     return Image.fromarray(out, "RGBA")
 
 
@@ -197,18 +221,26 @@ def cmd_extract(a):
     art = bodies.ART / name
     meta = json.loads((art / "sheet.json").read_text())
     sheet = Image.open(art / "sheet.png").convert("RGBA")
-    out = Image.new("RGBA", sheet.size)
+    out, back = Image.new("RGBA", sheet.size), Image.new("RGBA", sheet.size)
     for d in rig.DIRS:
         if not (odir(name, a.item) / f"{d}.png").exists():
             print("  missing", d)
             continue
         layer, ref_cell = item_cell(name, a.item, kind, d)
+        hind = None
+        if p.get("back") and d in ("S", "SW", "W"):  # long hair: what hangs outside the body goes behind it
+            la = np.asarray(layer).copy()
+            hind = la.copy()
+            outside = np.asarray(ref_cell)[..., 3] == 0
+            hind[~outside] = 0
+            la[outside] = 0
+            layer, hind = Image.fromarray(la, "RGBA"), Image.fromarray(hind, "RGBA")
         ref_j = rig.view_joints(body, rig.POSES["idle"][0], d)
         keys = []
         for key, (state, i) in KEYS.items() if kind == "outfit" else ():
             if (odir(name, a.item) / f"{stem(d, key)}.png").exists():
                 kj = rig.view_joints(body, rig.POSES[state][i], d)
-                keys.append((bone_pieces(item_cell(name, a.item, kind, d, key)[0], kj, d, body), kj))
+                keys.append((bone_pieces(item_cell(name, a.item, kind, d, key)[0], kj, d, body, p.get("skirt", False)), kj))
         di = rig.DIRS.index(d)
         for state, st in meta["states"].items():
             for i, r in enumerate(st["dirs"][di]):
@@ -220,12 +252,18 @@ def cmd_extract(a):
                     placed = place_outfit(keys, j, np.asarray(cell)[..., 3] > 0)
                 else:
                     placed = place_hair(layer, ref_cell, cell, body, ref_j, j, pose.roll)
+                    if hind:
+                        back.paste(place_hair(hind, ref_cell, cell, body, ref_j, j, pose.roll), box[:2])
                 out.paste(placed, box[:2])
     dst = art / "layers" / a.item
     dst.mkdir(parents=True, exist_ok=True)
     out.save(dst / "sheet.png")
-    save_json(dst / "layer.json", {"item": a.item, "slot": "outfit" if kind == "outfit" else "hair",
-                                   "dye": DYE[p["slot"]], "method": "cutout" if kind == "outfit" else "anchored"})
+    info = {"item": a.item, "slot": "outfit" if kind == "outfit" else "hair",
+            "dye": DYE[p["slot"]], "method": "cutout" if kind == "outfit" else "anchored"}
+    if p.get("back"):
+        back.save(dst / "back.png")
+        info["back"] = "back.png"  # drawn behind the body
+    save_json(dst / "layer.json", info)
     print("wrote", dst)
 
 

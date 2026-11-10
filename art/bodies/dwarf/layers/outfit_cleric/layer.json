@@ -1,0 +1,9 @@
+{
+  "item": "outfit_cleric",
+  "slot": "outfit",
+  "dye": [
+    "cloth1",
+    "cloth2"
+  ],
+  "method": "cutout"
+}

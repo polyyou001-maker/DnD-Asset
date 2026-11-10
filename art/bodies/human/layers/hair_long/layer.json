@@ -1,0 +1,9 @@
+{
+  "item": "hair_long",
+  "slot": "hair",
+  "dye": [
+    "hair"
+  ],
+  "method": "anchored",
+  "back": "back.png"
+}

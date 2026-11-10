@@ -42,8 +42,7 @@ directions) in hair and clothes that the player mixes freely and dyes, at a GPU 
 - Each frame draws the piece at the rig's head joint of that frame (`joints.json` head,
   plus the same `fit_shift` correction the body uses), exactly as eyes are placed.
 - Layers: `hair_back` (behind the body) and `hair_front`. Short styles (bob, short) are
-  front-only. Long and twintails need the back piece split off; their split rule is settled
-  when they are made (open question 1).
+  front-only. Long and twintails have the back piece split off (rule R1 below).
 - `hit`: hair follows the head joint; no sway. `dead` frames 1–2 rotate the piece with the
   body's fall angle (nearest neighbour; 90° is exact, the brief 52° frame is accepted as is).
 
@@ -155,12 +154,42 @@ Known: the ears are partly cut into the hair piece (elf N, halfling) because the
 them. They land where the body's own ears are, so they only show if the head turns away from
 the rig.
 
+## Rest of set A (2026-11-10)
+
+Decided with the user (round 2, recommended answers):
+
+| # | Decision |
+|---|---|
+| R1 | Long hair and twintails: in S, SW, W the hair outside the idle body's silhouette is `hair_back` (`back.png`, drawn behind the body), the rest `hair_front`; NW and N are front only. Both pieces follow the head rigidly. Hair hidden by an arm in the key frame stays missing when the arm moves |
+| R2 | Robes (`"skirt": true` in `sets/A.json`, cleric and wizard): the cloth below the hips that the cut-out would give to the torso or legs is one `skirt` piece. It turns with the torso about the pelvis, is drawn over the legs and is not clipped to the body. Of the two key frames it takes the one whose thighs are spread most like the target frame's. Fall back to key poses (B) only for states the user rejects in the Lab |
+| R3 | v2 prompts unchanged; bad raw images get new seeds |
+| R4 | All 6 items on Human first, one Lab check, then the other species |
+
+- `layer.json` gains `"back": "back.png"` for split hair; `composeBody` takes `[{image, back}]` and
+  draws the back sheets under everything (`destination-over`). The Lab loads all 8 items per body
+  and has a Hair row.
+- **White on white:** the white cleric robe (~230) and white hair hanging outside the body were cut
+  away as background by `figure_mask`'s 215 threshold. Layers now treat only > 245 as background.
+- **Human picks:** many raw images needed new seeds (yellow or cream hair, missing hair, wizard W
+  white/cream or tiny, cleric S knee-length). The model rarely draws a floor-length chibi robe:
+  wizard and cleric robes are knee- to calf-length in most directions, open at the front in some.
+- Running two generations at once crashes the `--lowvram` webui; sweeps run one at a time with restart.
+- **Elf, Dwarf, Halfling:** 150 images (~4 h) plus 30 redo images for 21 bad ones. The wizard robe
+  in side views was the weakest (white, beige, green, almost none or a tiny extra figure): elf W
+  needed 6 seeds. Long hair failed by turning yellow or bob-length, by changing the shirt below
+  the hair (a brown skirt on dwarf N), or by matching the skin too closely (dwarf NW: the top of
+  the head was cut away).
+- All 8 items were re-extracted on all four species with the 245 threshold: `hair_short` and
+  `outfit_fighter` gained 0.1–0.6 % pixels at the edges, none lost.
+- **Known on these species:** the elf robe in NW changes shade between the two key frames mid-walk;
+  dwarf long hair N keeps a little white shirt at the shoulders (dyed with the hair); rogue backs
+  in NW/N are mostly bare skin (the model draws a short capelet); elf long hair S is thin.
+
 ## Open questions
 
-1. How long hair and twintails split into back and front pieces.
-2. Whether the cut-out needs per-frame cleanup when a body frame's silhouette differs much
+1. Whether the cut-out needs per-frame cleanup when a body frame's silhouette differs much
    from the rig (AI drift) — the pilot will show.
-3. Headgear and weapons in the new frames (separate spec).
+2. Headgear and weapons in the new frames (separate spec).
 
 ## Out of scope
 
