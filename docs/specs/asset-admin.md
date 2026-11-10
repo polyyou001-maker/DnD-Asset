@@ -59,7 +59,8 @@ versions, so they can be undone too.
 |---|---|---|---|
 | Body | `art/bodies/<body>/sheet.png` + `sheet.json` | one body | body, direction, state |
 | Face | `art/bodies/<body>/eyes.png` + `sheet.json.eyes` | one body's eye set | body, direction, open/closed |
-| Hair, Clothes, Weapons, Effects | `art/layers/<category>/<part>/sheet.png` + `sheet.json`, when they exist | one part | body, direction, state |
+| Hair, Clothes | `art/bodies/<body>/layers/hair_*` / `outfit_*/sheet.png` (+ `layer.json`, `back.png`), frames from the body's `sheet.json`; named `<body>_<item>`, shown worn on the body, undyed | one item on one body | body, direction, state |
+| Weapons, Effects | `art/layers/<category>/<part>/sheet.png` + `sheet.json`, when they exist | one part | body, direction, state |
 | Legacy | `art/paperdoll/*`, `art/paperdoll2/*` | one folder | set |
 
 Categories come from a table in the server, one entry per source pattern, so a new layer needs

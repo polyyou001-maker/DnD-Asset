@@ -56,6 +56,7 @@ class Asset:
     sheet: pathlib.Path = None  # the replaceable image; None = view and download only
     frames: dict = dataclasses.field(default_factory=dict)  # "<state>_<dir>_<i>" -> frame + rect
     meta: dict = None
+    body: str = None  # a hair/clothes layer: the body it is worn on (art/bodies/<body>/layers/<item>/)
 
     @property
     def override_dir(self):
@@ -87,8 +88,8 @@ def eye_frames(meta):
 SOURCES = [
     ("body", "Body", "bodies/*/sheet.png", sheet_frames),
     ("face", "Face", "bodies/*/eyes.png", eye_frames),
-    ("hair", "Hair", "layers/hair/*/sheet.png", sheet_frames),
-    ("clothes", "Clothes", "layers/clothes/*/sheet.png", sheet_frames),
+    ("hair", "Hair", "bodies/*/layers/hair_*/sheet.png", sheet_frames),
+    ("clothes", "Clothes", "bodies/*/layers/outfit_*/sheet.png", sheet_frames),
     ("weapons", "Weapons", "layers/weapons/*/sheet.png", sheet_frames),
     ("effects", "Effects", "layers/effects/*/sheet.png", sheet_frames),
 ]
@@ -107,15 +108,21 @@ def scan():
 
     for category, _, pattern, frames in SOURCES:
         for image in sorted(ART.glob(pattern)):
-            meta_path = image.with_name("sheet.json")
+            # a body layer has the body's frame layout: its sheet.json is the body's
+            body = image.parents[2].name if image.parent.parent.name == "layers" else None
+            meta_path = image.parents[2] / "sheet.json" if body else image.with_name("sheet.json")
             try:
                 meta = json.loads(meta_path.read_text(encoding="utf-8"))
                 found = frames(meta)
             except (OSError, ValueError, KeyError, TypeError):
                 continue  # no usable metadata: it shows up in Unsorted instead
-            files = [image, meta_path] if image.name == "sheet.png" else [image]
-            name = image.parent.name
-            add(Asset(f"{category}/{name}", category, name, name, files, image, found, meta))
+            if body:  # named <body>_<item>, so a downloaded frame file names its layer
+                files = [image] + [p for p in (image.with_name("layer.json"), image.with_name("back.png")) if p.exists()]
+                name, group = f"{body}_{image.parent.name}", body
+            else:
+                files = [image, meta_path] if image.name == "sheet.png" else [image]
+                name = group = image.parent.name
+            add(Asset(f"{category}/{name}", category, name, group, files, image, found, meta, body))
     for root in LEGACY_ROOTS:
         for folder, _, names in sorted(os.walk(ART / root)):
             folder = pathlib.Path(folder)
@@ -208,13 +215,24 @@ def with_eyes(asset, key, cell):
     return out
 
 
+def worn(asset, key, cell):
+    """A hair/clothes frame drawn on its body (and long hair's back piece behind it), as the game shows it."""
+    f, body_dir = asset.frames[key], asset.sheet.parents[2]
+    out = Image.fromarray(crop(read_rgba(body_dir / "sheet.png"), f))
+    back = asset.sheet.with_name("back.png")
+    if back.exists():
+        out = Image.alpha_composite(Image.fromarray(crop(read_rgba(back), f)), out)
+    return np.array(Image.alpha_composite(out, Image.fromarray(cell)))
+
+
 def thumbnail(asset, q):
     if asset.frames:
         wanted = [k for k, f in asset.frames.items()
                   if q.get("state", f["state"]) == f["state"] and q.get("dir", f["dir"]) == f["dir"]]
         if not wanted:
             raise Refuse("ไม่มีเฟรมนี้", 404)
-        return png_bytes(with_eyes(asset, wanted[0], crop(read_rgba(asset.sheet), asset.frames[wanted[0]])))
+        cell = crop(read_rgba(asset.sheet), asset.frames[wanted[0]])
+        return png_bytes(worn(asset, wanted[0], cell) if asset.body else with_eyes(asset, wanted[0], cell))
     images = [p for p in asset.files if p.suffix == ".png"]
     if not images:
         raise Refuse("ไม่มีภาพ", 404)
@@ -232,7 +250,7 @@ def versions(asset):
 def summary(asset):
     keys = {p.stem for p in asset.override_files()}
     first = next(iter(asset.frames.values()), None)
-    return {"id": asset.id, "category": asset.category, "name": asset.name, "group": asset.group,
+    return {"id": asset.id, "category": asset.category, "name": asset.name, "group": asset.group, "body": asset.body,
             "editable": asset.sheet is not None, "edited": len(keys & set(asset.frames)),
             "dirs": sorted({f["dir"] for f in asset.frames.values()}, key=DIRS.index),
             "states": list(dict.fromkeys(f["state"] for f in asset.frames.values())),
@@ -408,7 +426,7 @@ def use_pipeline(index, body):
     if key in asset.frames:
         original = asset.history_dir / "pipeline" / override.name
         if not original.exists():
-            raise Refuse("ไม่พบเฟรมต้นฉบับในเครื่องนี้ รัน bodies.py extract แล้วลองอีกครั้ง", 409)
+            raise Refuse(f"ไม่พบเฟรมต้นฉบับในเครื่องนี้ รัน {'layers.py' if asset.body else 'bodies.py'} extract แล้วลองอีกครั้ง", 409)
         snapshot(asset, "use_pipeline", [key], "")
         sheet = read_rgba(asset.sheet)
         crop(sheet, asset.frames[key])[:] = read_rgba(original)

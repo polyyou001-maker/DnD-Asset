@@ -4,7 +4,7 @@ import { EYE_COLORS } from '/src/character/rules.js';
 
 const DIRS = ['S', 'SW', 'W', 'NW', 'N']; // order of dirs in sheet.json
 const ACTIONS = { replace: 'แทนไฟล์', restore: 'ย้อนกลับ', use_pipeline: 'ใช้เฟรม pipeline' };
-const GROUP_LABEL = { body: 'ทุกเผ่า', face: 'ทุกเผ่า', legacy: 'ทุกชุด' };
+const GROUP_LABEL = { body: 'ทุกเผ่า', face: 'ทุกเผ่า', hair: 'ทุกเผ่า', clothes: 'ทุกเผ่า', legacy: 'ทุกชุด' };
 const MAX_UPLOAD = 32 * 1024 * 1024; // the server's limit: above it the connection drops before any message
 const FACE_STATE = { open: 'idle', closed: 'blink' }; // what a face frame looks like in the game
 
@@ -54,6 +54,18 @@ function loadImage(url) {
 // The image a player shows: as in the game (eyes drawn in), with an uploaded file in place of the current one.
 async function loadSource(asset, pendingUrl) {
   const [image, metaFile] = asset.files;
+  if (asset.body) { // a hair/clothes layer: shown worn on its body, undyed (as generated)
+    const base = `/art/bodies/${asset.body}`;
+    const back = asset.files.find((f) => f.name === 'back.png');
+    const [meta, body, eyes, layer, backImage] = await Promise.all([
+      fetch(`${base}/sheet.json`).then((r) => r.json()),
+      loadImage(`${base}/sheet.png?v=${view.version}`),
+      loadImage(`${base}/eyes.png?v=${view.version}`),
+      loadImage(pendingUrl ?? `${image.url}?v=${view.version}`),
+      back ? loadImage(`${back.url}?v=${view.version}`) : null,
+    ]);
+    return composeBody(meta, body, eyes, EYE_COLORS.blue, 'slash', [{ image: layer, back: backImage }]);
+  }
   if (asset.category !== 'body' && asset.category !== 'face') {
     const meta = await (await fetch(metaFile.url)).json();
     return { ...meta, image: await loadImage(pendingUrl ?? `${image.url}?v=${view.version}`) };

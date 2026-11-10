@@ -89,7 +89,10 @@ art/bodies/<body>/layers/<item>/layer.json   # {"item", "slot": "outfit"|"hair",
   frames turn it about the head joint by the pose's roll.
 - The pipeline reads joints straight from the rig (`rig.view_joints`, every joint with depth),
   so `joints.json` keeps its six anchors.
-- Admin shows them under the existing **Hair** and **Clothes** categories, per species (not built).
+- Admin shows them under the existing **Hair** and **Clothes** categories, per species, worn on
+  the body. A replaced frame is an override (`art/overrides/{hair,clothes}/<body>_<item>/`) that
+  `layers.py extract` pastes on last, as `bodies.py` does for the body; only `sheet.png` is
+  replaceable (`back.png` is download only).
 
 ## Pipeline
 

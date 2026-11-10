@@ -255,6 +255,9 @@ def cmd_extract(a):
                     if hind:
                         back.paste(place_hair(hind, ref_cell, cell, body, ref_j, j, pose.roll), box[:2])
                 out.paste(placed, box[:2])
+    bodies.apply_overrides(out, "hair" if kind == "hair" else "clothes", f"{name}_{a.item}", {  # hand edits (admin)
+        f"{s}_{d}_{i}": (r["x"], r["y"], r["x"] + r["w"], r["y"] + r["h"])
+        for s, st in meta["states"].items() for d, rects in zip(rig.DIRS, st["dirs"]) for i, r in enumerate(rects)})
     dst = art / "layers" / a.item
     dst.mkdir(parents=True, exist_ok=True)
     out.save(dst / "sheet.png")
